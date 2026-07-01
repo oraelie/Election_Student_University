@@ -23,6 +23,24 @@ Partial Public Class StudentDashboard
 	Protected WithEvents form1 As Global.System.Web.UI.HtmlControls.HtmlForm
 
 	'''<summary>
+	'''lblConfirmFullName control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents lblConfirmFullName As Global.System.Web.UI.WebControls.Label
+
+	'''<summary>
+	'''lblConfirmUsername control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents lblConfirmUsername As Global.System.Web.UI.WebControls.Label
+
+	'''<summary>
 	'''lblFullName control.
 	'''</summary>
 	'''<remarks>

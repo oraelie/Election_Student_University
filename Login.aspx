@@ -1,4 +1,4 @@
-﻿<%@ Page Language="vb" AutoEventWireup="false" CodeBehind="Login.aspx.vb" Inherits="UniversityElectionSystem.Login" %>
+﻿l<%@ Page Language="vb" AutoEventWireup="false" CodeBehind="Login.aspx.vb" Inherits="UniversityElectionSystem.Login" %>
 
 <!DOCTYPE html>
 

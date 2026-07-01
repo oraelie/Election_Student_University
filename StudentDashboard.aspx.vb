@@ -27,6 +27,9 @@
         lblFullName.Text = "Welcome, " & fullName
         lblUsername.Text = "Username: " & adUsername
 
+        lblConfirmFullName.Text = fullName
+        lblConfirmUsername.Text = adUsername
+
     End Sub
 
     Protected Sub btnVote_Click(sender As Object, e As EventArgs) Handles btnVote.Click
@@ -35,6 +38,7 @@
 
     Protected Sub btnLogout_Click(sender As Object, e As EventArgs) Handles btnLogout.Click
         Session.Clear()
+        Session.Abandon()
         Response.Redirect("Login.aspx")
     End Sub
 
