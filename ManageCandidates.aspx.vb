@@ -59,6 +59,7 @@ Public Class ManageCandidates
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
                     Dim dt As New DataTable()
 
                     Using da As New SqlDataAdapter(cmd)
@@ -69,6 +70,7 @@ Public Class ManageCandidates
                     ddlPosition.DataTextField = "PositionDisplay"
                     ddlPosition.DataValueField = "PositionID"
                     ddlPosition.DataBind()
+
                 End Using
 
             End Using
@@ -92,6 +94,7 @@ Public Class ManageCandidates
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
                     Dim dt As New DataTable()
 
                     Using da As New SqlDataAdapter(cmd)
@@ -102,6 +105,7 @@ Public Class ManageCandidates
                     ddlFaculty.DataTextField = "FacultyName"
                     ddlFaculty.DataValueField = "FacultyID"
                     ddlFaculty.DataBind()
+
                 End Using
 
             End Using
@@ -139,6 +143,7 @@ Public Class ManageCandidates
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
                     Dim dt As New DataTable()
 
                     Using da As New SqlDataAdapter(cmd)
@@ -147,6 +152,7 @@ Public Class ManageCandidates
 
                     gvCandidates.DataSource = dt
                     gvCandidates.DataBind()
+
                 End Using
 
             End Using
@@ -169,7 +175,11 @@ Public Class ManageCandidates
             Return
         End If
 
-        If txtFullName.Text.Trim() = "" Then
+        Dim candidateName As String = txtFullName.Text.Trim()
+        Dim major As String = txtMajor.Text.Trim()
+        Dim description As String = txtDescription.Text.Trim()
+
+        If candidateName = "" Then
             lblMessage.Text = "Please enter the candidate full name."
             Return
         End If
@@ -183,6 +193,11 @@ Public Class ManageCandidates
             End If
         End If
 
+        Dim positionID As Integer = Convert.ToInt32(ddlPosition.SelectedValue)
+        Dim facultyID As Integer = Convert.ToInt32(ddlFaculty.SelectedValue)
+        Dim positionText As String = ddlPosition.SelectedItem.Text
+        Dim facultyText As String = ddlFaculty.SelectedItem.Text
+
         Try
             Using con As New SqlConnection(connectionString)
 
@@ -195,14 +210,14 @@ Public Class ManageCandidates
 
                 Using cmd As New SqlCommand(query, con)
 
-                    cmd.Parameters.AddWithValue("@FullName", txtFullName.Text.Trim())
-                    cmd.Parameters.AddWithValue("@PositionID", Convert.ToInt32(ddlPosition.SelectedValue))
-                    cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(ddlFaculty.SelectedValue))
+                    cmd.Parameters.AddWithValue("@FullName", candidateName)
+                    cmd.Parameters.AddWithValue("@PositionID", positionID)
+                    cmd.Parameters.AddWithValue("@FacultyID", facultyID)
 
-                    If txtMajor.Text.Trim() = "" Then
+                    If major = "" Then
                         cmd.Parameters.AddWithValue("@Major", DBNull.Value)
                     Else
-                        cmd.Parameters.AddWithValue("@Major", txtMajor.Text.Trim())
+                        cmd.Parameters.AddWithValue("@Major", major)
                     End If
 
                     If txtYearLevel.Text.Trim() = "" Then
@@ -211,10 +226,10 @@ Public Class ManageCandidates
                         cmd.Parameters.AddWithValue("@YearLevel", yearLevel)
                     End If
 
-                    If txtDescription.Text.Trim() = "" Then
+                    If description = "" Then
                         cmd.Parameters.AddWithValue("@Description", DBNull.Value)
                     Else
-                        cmd.Parameters.AddWithValue("@Description", txtDescription.Text.Trim())
+                        cmd.Parameters.AddWithValue("@Description", description)
                     End If
 
                     con.Open()
@@ -223,6 +238,15 @@ Public Class ManageCandidates
                 End Using
 
             End Using
+
+            AddAuditLog(
+                "Add Candidate",
+                "Added candidate: " & candidateName &
+                ", Position: " & positionText &
+                ", PositionID: " & positionID.ToString() &
+                ", Faculty: " & facultyText &
+                ", FacultyID: " & facultyID.ToString()
+            )
 
             lblMessage.Text = "Candidate added successfully."
 
@@ -264,14 +288,22 @@ Public Class ManageCandidates
                     "
 
                     Using cmd As New SqlCommand(query, con)
+
                         cmd.Parameters.AddWithValue("@IsActive", chk.Checked)
                         cmd.Parameters.AddWithValue("@CandidateID", candidateID)
 
                         con.Open()
                         cmd.ExecuteNonQuery()
+
                     End Using
 
                 End Using
+
+                AddAuditLog(
+                    "Update Candidate",
+                    "Updated CandidateID: " & candidateID.ToString() &
+                    ", Active = " & chk.Checked.ToString()
+                )
 
                 lblMessage.Text = "Candidate updated successfully."
                 LoadCandidates()
@@ -281,6 +313,41 @@ Public Class ManageCandidates
             End Try
 
         End If
+
+    End Sub
+
+    Private Sub AddAuditLog(actionType As String, actionDetails As String)
+
+        Try
+            If Session("ADUsername") Is Nothing Then
+                Return
+            End If
+
+            Dim adminUsername As String = Session("ADUsername").ToString()
+
+            Using con As New SqlConnection(connectionString)
+
+                Dim query As String = "
+                    INSERT INTO AuditLog (ADUsername, ActionType, ActionDetails)
+                    VALUES (@ADUsername, @ActionType, @ActionDetails)
+                "
+
+                Using cmd As New SqlCommand(query, con)
+
+                    cmd.Parameters.AddWithValue("@ADUsername", adminUsername)
+                    cmd.Parameters.AddWithValue("@ActionType", actionType)
+                    cmd.Parameters.AddWithValue("@ActionDetails", actionDetails)
+
+                    con.Open()
+                    cmd.ExecuteNonQuery()
+
+                End Using
+
+            End Using
+
+        Catch
+            ' If audit log fails, do not stop the main action.
+        End Try
 
     End Sub
 
