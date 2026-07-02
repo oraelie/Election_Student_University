@@ -11,53 +11,79 @@
 <body>
     <form id="form1" runat="server">
 
-        <div class="dashboard-box">
+        <div class="dashboard-container">
 
-            <h2>Admin Dashboard</h2>
+            <div class="header-box">
+                <h2>Admin Dashboard</h2>
 
-            <asp:Label ID="lblFullName" runat="server" CssClass="welcome-label"></asp:Label>
-            <br />
-            <asp:Label ID="lblUsername" runat="server" CssClass="username-label"></asp:Label>
+                <asp:Label ID="lblFullName" runat="server" CssClass="welcome-label"></asp:Label>
+                <br />
+                <asp:Label ID="lblUsername" runat="server" CssClass="username-label"></asp:Label>
+            </div>
 
-            <br /><br />
+            <div class="cards-grid">
 
-            <asp:Button 
-                ID="btnManagePositions" 
-                runat="server" 
-                Text="Manage Positions" 
-                CssClass="main-button" />
+                <div class="dashboard-card">
+                    <h3>Manage Elections</h3>
+                    <p>Create elections, set dates, and change election status.</p>
+                    <asp:Button 
+                        ID="btnManageElections" 
+                        runat="server" 
+                        Text="Open" 
+                        CssClass="card-button" />
+                </div>
 
-             <asp:Button 
-                    ID="btnManageElections" 
-                    runat="server" 
-                    Text="Manage Elections" 
-                    CssClass="main-button" />
-    
-             <asp:Button 
-                    ID="btnManageCandidates" 
-                    runat="server" 
-                    Text="Manage Candidates" 
-                    CssClass="main-button" />   
-             <br /><br /> 
+                <div class="dashboard-card">
+                    <h3>Manage Positions</h3>
+                    <p>Add positions such as President, Vice President, or Faculty Representative.</p>
+                    <asp:Button 
+                        ID="btnManagePositions" 
+                        runat="server" 
+                        Text="Open" 
+                        CssClass="card-button" />
+                </div>
 
-            <asp:Button 
-                ID="btnResults" 
-                runat="server" 
-                Text="View Results" 
-                CssClass="main-button" />
-                <br /><br />
+                <div class="dashboard-card">
+                    <h3>Manage Candidates</h3>
+                    <p>Add candidates and activate or deactivate them.</p>
+                    <asp:Button 
+                        ID="btnManageCandidates" 
+                        runat="server" 
+                        Text="Open" 
+                        CssClass="card-button" />
+                </div>
 
-            <asp:Button 
-                ID="btnManageVoters" 
-                runat="server" 
-                Text="Manage Voters" 
-                CssClass="main-button" />
+                <div class="dashboard-card">
+                    <h3>Manage Voters</h3>
+                    <p>Add eligible AD users and assign them to faculties.</p>
+                    <asp:Button 
+                        ID="btnManageVoters" 
+                        runat="server" 
+                        Text="Open" 
+                        CssClass="card-button" />
+                </div>
 
-            <asp:Button 
-                ID="btnLogout" 
-                runat="server" 
-                Text="Logout" 
-                CssClass="logout-button" />
+                <div class="dashboard-card">
+                    <h3>View Results</h3>
+                    <p>View election results and total votes per candidate.</p>
+                    <asp:Button 
+                        ID="btnResults" 
+                        runat="server" 
+                        Text="Open" 
+                        CssClass="card-button" />
+                </div>
+
+                <div class="dashboard-card logout-card">
+                    <h3>Logout</h3>
+                    <p>End the current admin session safely.</p>
+                    <asp:Button 
+                        ID="btnLogout" 
+                        runat="server" 
+                        Text="Logout" 
+                        CssClass="logout-button" />
+                </div>
+
+            </div>
 
         </div>
 

@@ -29,6 +29,22 @@
 
     End Sub
 
+    Protected Sub btnManageElections_Click(sender As Object, e As EventArgs) Handles btnManageElections.Click
+        Response.Redirect("ManageElections.aspx")
+    End Sub
+
+    Protected Sub btnManagePositions_Click(sender As Object, e As EventArgs) Handles btnManagePositions.Click
+        Response.Redirect("ManagePositions.aspx")
+    End Sub
+
+    Protected Sub btnManageCandidates_Click(sender As Object, e As EventArgs) Handles btnManageCandidates.Click
+        Response.Redirect("ManageCandidates.aspx")
+    End Sub
+
+    Protected Sub btnManageVoters_Click(sender As Object, e As EventArgs) Handles btnManageVoters.Click
+        Response.Redirect("ManageVoters.aspx")
+    End Sub
+
     Protected Sub btnResults_Click(sender As Object, e As EventArgs) Handles btnResults.Click
         Response.Redirect("Results.aspx")
     End Sub
@@ -38,17 +54,5 @@
         Session.Abandon()
         Response.Redirect("Login.aspx")
     End Sub
-    Protected Sub btnManageElections_Click(sender As Object, e As EventArgs) Handles btnManageElections.Click
-        Response.Redirect("ManageElections.aspx")
-    End Sub
-    Protected Sub btnManagePositions_Click(sender As Object, e As EventArgs) Handles btnManagePositions.Click
-        Response.Redirect("ManagePositions.aspx")
-    End Sub
 
-    Protected Sub btnManageCandidates_Click(sender As Object, e As EventArgs) Handles btnManageCandidates.Click
-        Response.Redirect("ManageCandidates.aspx")
-    End Sub
-    Protected Sub btnManageVoters_Click(sender As Object, e As EventArgs) Handles btnManageVoters.Click
-        Response.Redirect("ManageVoters.aspx")
-    End Sub
 End Class

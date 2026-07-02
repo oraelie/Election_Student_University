@@ -41,15 +41,6 @@ Partial Public Class AdminDashboard
 	Protected WithEvents lblUsername As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
-	'''btnManagePositions control.
-	'''</summary>
-	'''<remarks>
-	'''Auto-generated field.
-	'''To modify move field declaration from designer file to code-behind file.
-	'''</remarks>
-	Protected WithEvents btnManagePositions As Global.System.Web.UI.WebControls.Button
-
-	'''<summary>
 	'''btnManageElections control.
 	'''</summary>
 	'''<remarks>
@@ -57,6 +48,15 @@ Partial Public Class AdminDashboard
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents btnManageElections As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''btnManagePositions control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnManagePositions As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
 	'''btnManageCandidates control.
@@ -68,15 +68,6 @@ Partial Public Class AdminDashboard
 	Protected WithEvents btnManageCandidates As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
-	'''btnResults control.
-	'''</summary>
-	'''<remarks>
-	'''Auto-generated field.
-	'''To modify move field declaration from designer file to code-behind file.
-	'''</remarks>
-	Protected WithEvents btnResults As Global.System.Web.UI.WebControls.Button
-
-	'''<summary>
 	'''btnManageVoters control.
 	'''</summary>
 	'''<remarks>
@@ -84,6 +75,15 @@ Partial Public Class AdminDashboard
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents btnManageVoters As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''btnResults control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnResults As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
 	'''btnLogout control.
