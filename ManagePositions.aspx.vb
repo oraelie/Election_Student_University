@@ -46,6 +46,7 @@ Public Class ManagePositions
 
         Try
             Using con As New SqlConnection(connectionString)
+
                 Dim query As String = "
                     SELECT ElectionID, ElectionTitle
                     FROM Elections
@@ -53,6 +54,7 @@ Public Class ManagePositions
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
                     Dim dt As New DataTable()
 
                     Using da As New SqlDataAdapter(cmd)
@@ -63,7 +65,9 @@ Public Class ManagePositions
                     ddlElection.DataTextField = "ElectionTitle"
                     ddlElection.DataValueField = "ElectionID"
                     ddlElection.DataBind()
+
                 End Using
+
             End Using
 
         Catch ex As Exception
@@ -76,6 +80,7 @@ Public Class ManagePositions
 
         Try
             Using con As New SqlConnection(connectionString)
+
                 Dim query As String = "
                     SELECT FacultyID, FacultyName
                     FROM Faculties
@@ -84,6 +89,7 @@ Public Class ManagePositions
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
                     Dim dt As New DataTable()
 
                     Using da As New SqlDataAdapter(cmd)
@@ -94,9 +100,16 @@ Public Class ManagePositions
                     ddlFaculty.Items.Add(New ListItem("General Position", ""))
 
                     For Each row As DataRow In dt.Rows
-                        ddlFaculty.Items.Add(New ListItem(row("FacultyName").ToString(), row("FacultyID").ToString()))
+                        ddlFaculty.Items.Add(
+                            New ListItem(
+                                row("FacultyName").ToString(),
+                                row("FacultyID").ToString()
+                            )
+                        )
                     Next
+
                 End Using
+
             End Using
 
         Catch ex As Exception
@@ -109,6 +122,7 @@ Public Class ManagePositions
 
         Try
             Using con As New SqlConnection(connectionString)
+
                 Dim query As String = "
                     SELECT 
                         P.PositionID,
@@ -125,6 +139,7 @@ Public Class ManagePositions
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
                     Dim dt As New DataTable()
 
                     Using da As New SqlDataAdapter(cmd)
@@ -133,7 +148,9 @@ Public Class ManagePositions
 
                     gvPositions.DataSource = dt
                     gvPositions.DataBind()
+
                 End Using
+
             End Using
 
         Catch ex As Exception
@@ -149,9 +166,20 @@ Public Class ManagePositions
             Return
         End If
 
-        If txtPositionTitle.Text.Trim() = "" Then
+        Dim positionTitle As String = txtPositionTitle.Text.Trim()
+
+        If positionTitle = "" Then
             lblMessage.Text = "Please enter the position title."
             Return
+        End If
+
+        Dim electionID As Integer = Convert.ToInt32(ddlElection.SelectedValue)
+        Dim facultyText As String = "General Position"
+        Dim facultyIDText As String = "NULL"
+
+        If ddlFaculty.SelectedValue <> "" Then
+            facultyText = ddlFaculty.SelectedItem.Text
+            facultyIDText = ddlFaculty.SelectedValue
         End If
 
         Try
@@ -163,8 +191,9 @@ Public Class ManagePositions
                 "
 
                 Using cmd As New SqlCommand(query, con)
-                    cmd.Parameters.AddWithValue("@ElectionID", Convert.ToInt32(ddlElection.SelectedValue))
-                    cmd.Parameters.AddWithValue("@PositionTitle", txtPositionTitle.Text.Trim())
+
+                    cmd.Parameters.AddWithValue("@ElectionID", electionID)
+                    cmd.Parameters.AddWithValue("@PositionTitle", positionTitle)
 
                     If ddlFaculty.SelectedValue = "" Then
                         cmd.Parameters.AddWithValue("@FacultyID", DBNull.Value)
@@ -174,9 +203,18 @@ Public Class ManagePositions
 
                     con.Open()
                     cmd.ExecuteNonQuery()
+
                 End Using
 
             End Using
+
+            AddAuditLog(
+                "Add Position",
+                "Added position: " & positionTitle &
+                ", ElectionID: " & electionID.ToString() &
+                ", Faculty: " & facultyText &
+                ", FacultyID: " & facultyIDText
+            )
 
             lblMessage.Text = "Position added successfully."
             txtPositionTitle.Text = ""
@@ -215,14 +253,22 @@ Public Class ManagePositions
                     "
 
                     Using cmd As New SqlCommand(query, con)
+
                         cmd.Parameters.AddWithValue("@IsActive", chk.Checked)
                         cmd.Parameters.AddWithValue("@PositionID", positionID)
 
                         con.Open()
                         cmd.ExecuteNonQuery()
+
                     End Using
 
                 End Using
+
+                AddAuditLog(
+                    "Update Position",
+                    "Updated PositionID: " & positionID.ToString() &
+                    ", Active = " & chk.Checked.ToString()
+                )
 
                 lblMessage.Text = "Position updated successfully."
                 LoadPositions()
@@ -232,6 +278,41 @@ Public Class ManagePositions
             End Try
 
         End If
+
+    End Sub
+
+    Private Sub AddAuditLog(actionType As String, actionDetails As String)
+
+        Try
+            If Session("ADUsername") Is Nothing Then
+                Return
+            End If
+
+            Dim adminUsername As String = Session("ADUsername").ToString()
+
+            Using con As New SqlConnection(connectionString)
+
+                Dim query As String = "
+                    INSERT INTO AuditLog (ADUsername, ActionType, ActionDetails)
+                    VALUES (@ADUsername, @ActionType, @ActionDetails)
+                "
+
+                Using cmd As New SqlCommand(query, con)
+
+                    cmd.Parameters.AddWithValue("@ADUsername", adminUsername)
+                    cmd.Parameters.AddWithValue("@ActionType", actionType)
+                    cmd.Parameters.AddWithValue("@ActionDetails", actionDetails)
+
+                    con.Open()
+                    cmd.ExecuteNonQuery()
+
+                End Using
+
+            End Using
+
+        Catch
+            ' If audit log fails, do not stop the main action.
+        End Try
 
     End Sub
 
