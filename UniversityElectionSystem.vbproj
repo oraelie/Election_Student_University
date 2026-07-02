@@ -147,6 +147,9 @@
     <Content Include="Content\Site.css" />
     <Content Include="Css\AdminDashboard.css" />
     <Content Include="Css\Login.css" />
+    <Content Include="Css\ManageElections.css" />
+    <Content Include="Css\ManagePositions.css" />
+    <Content Include="Css\Results.css" />
     <Content Include="Css\StudentDashboard.css" />
     <Content Include="Css\Vote.css" />
     <Content Include="Default.aspx" />
@@ -154,6 +157,9 @@
     <Content Include="Global.asax" />
     <Content Include="Login.aspx" />
     <Content Include="Logout.aspx" />
+    <Content Include="ManageElections.aspx" />
+    <Content Include="ManagePositions.aspx" />
+    <Content Include="Results.aspx" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
@@ -263,6 +269,20 @@
       <DependentUpon>Logout.aspx</DependentUpon>
       <SubType>ASPXCodebehind</SubType>
     </Compile>
+    <Compile Include="ManageElections.aspx.designer.vb">
+      <DependentUpon>ManageElections.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ManageElections.aspx.vb">
+      <DependentUpon>ManageElections.aspx</DependentUpon>
+      <SubType>ASPXCodebehind</SubType>
+    </Compile>
+    <Compile Include="ManagePositions.aspx.designer.vb">
+      <DependentUpon>ManagePositions.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ManagePositions.aspx.vb">
+      <DependentUpon>ManagePositions.aspx</DependentUpon>
+      <SubType>ASPXCodebehind</SubType>
+    </Compile>
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -281,6 +301,13 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="Results.aspx.designer.vb">
+      <DependentUpon>Results.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Results.aspx.vb">
+      <DependentUpon>Results.aspx</DependentUpon>
+      <SubType>ASPXCodebehind</SubType>
     </Compile>
     <Compile Include="Site.Master.designer.vb">
       <DependentUpon>Site.Master</DependentUpon>

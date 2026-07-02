@@ -11,7 +11,7 @@ Option Strict On
 Option Explicit On
 
 
-Partial Public Class AdminDashboard
+Partial Public Class ManagePositions
 
 	'''<summary>
 	'''form1 control.
@@ -23,13 +23,13 @@ Partial Public Class AdminDashboard
 	Protected WithEvents form1 As Global.System.Web.UI.HtmlControls.HtmlForm
 
 	'''<summary>
-	'''lblFullName control.
+	'''lblAdminName control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents lblFullName As Global.System.Web.UI.WebControls.Label
+	Protected WithEvents lblAdminName As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
 	'''lblUsername control.
@@ -41,31 +41,67 @@ Partial Public Class AdminDashboard
 	Protected WithEvents lblUsername As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
-	'''btnManagePositions control.
+	'''lblMessage control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents btnManagePositions As Global.System.Web.UI.WebControls.Button
+	Protected WithEvents lblMessage As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
-	'''btnManageElections control.
+	'''ddlElection control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents btnManageElections As Global.System.Web.UI.WebControls.Button
+	Protected WithEvents ddlElection As Global.System.Web.UI.WebControls.DropDownList
 
 	'''<summary>
-	'''btnResults control.
+	'''txtPositionTitle control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents btnResults As Global.System.Web.UI.WebControls.Button
+	Protected WithEvents txtPositionTitle As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
+	'''ddlFaculty control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlFaculty As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''btnAddPosition control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnAddPosition As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''gvPositions control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents gvPositions As Global.System.Web.UI.WebControls.GridView
+
+	'''<summary>
+	'''btnBack control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnBack As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
 	'''btnLogout control.

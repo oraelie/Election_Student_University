@@ -38,5 +38,11 @@
         Session.Abandon()
         Response.Redirect("Login.aspx")
     End Sub
+    Protected Sub btnManageElections_Click(sender As Object, e As EventArgs) Handles btnManageElections.Click
+        Response.Redirect("ManageElections.aspx")
+    End Sub
+    Protected Sub btnManagePositions_Click(sender As Object, e As EventArgs) Handles btnManagePositions.Click
+        Response.Redirect("ManagePositions.aspx")
+    End Sub
 
 End Class

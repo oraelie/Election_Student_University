@@ -11,7 +11,7 @@ Option Strict On
 Option Explicit On
 
 
-Partial Public Class AdminDashboard
+Partial Public Class ManageElections
 
 	'''<summary>
 	'''form1 control.
@@ -23,13 +23,13 @@ Partial Public Class AdminDashboard
 	Protected WithEvents form1 As Global.System.Web.UI.HtmlControls.HtmlForm
 
 	'''<summary>
-	'''lblFullName control.
+	'''lblAdminName control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents lblFullName As Global.System.Web.UI.WebControls.Label
+	Protected WithEvents lblAdminName As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
 	'''lblUsername control.
@@ -41,31 +41,76 @@ Partial Public Class AdminDashboard
 	Protected WithEvents lblUsername As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
-	'''btnManagePositions control.
+	'''lblMessage control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents btnManagePositions As Global.System.Web.UI.WebControls.Button
+	Protected WithEvents lblMessage As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
-	'''btnManageElections control.
+	'''txtElectionTitle control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents btnManageElections As Global.System.Web.UI.WebControls.Button
+	Protected WithEvents txtElectionTitle As Global.System.Web.UI.WebControls.TextBox
 
 	'''<summary>
-	'''btnResults control.
+	'''txtStartDateTime control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents btnResults As Global.System.Web.UI.WebControls.Button
+	Protected WithEvents txtStartDateTime As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
+	'''txtEndDateTime control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents txtEndDateTime As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
+	'''ddlStatus control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlStatus As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''btnAddElection control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnAddElection As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''gvElections control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents gvElections As Global.System.Web.UI.WebControls.GridView
+
+	'''<summary>
+	'''btnBack control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnBack As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
 	'''btnLogout control.

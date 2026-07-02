@@ -22,10 +22,23 @@
             <br /><br />
 
             <asp:Button 
+                ID="btnManagePositions" 
+                runat="server" 
+                Text="Manage Positions" 
+                CssClass="main-button" />
+
+            <asp:Button 
+                    ID="btnManageElections" 
+                    runat="server" 
+                    Text="Manage Elections" 
+                    CssClass="main-button" />
+
+            <asp:Button 
                 ID="btnResults" 
                 runat="server" 
                 Text="View Results" 
                 CssClass="main-button" />
+                <br /><br />
 
             <asp:Button 
                 ID="btnLogout" 
