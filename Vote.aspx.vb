@@ -47,12 +47,12 @@ Public Class Vote
     Private Sub LoadAllowedCandidates()
 
         Dim adUsername As String = Session("ADUsername").ToString()
-
         Dim dt As New DataTable()
 
         Try
             Using con As New SqlConnection(connectionString)
                 Using cmd As New SqlCommand("sp_GetCandidatesForVoter", con)
+
                     cmd.CommandType = CommandType.StoredProcedure
                     cmd.Parameters.AddWithValue("@ADUsername", adUsername)
                     cmd.Parameters.AddWithValue("@ElectionID", ElectionID)
@@ -60,16 +60,16 @@ Public Class Vote
                     Using da As New SqlDataAdapter(cmd)
                         da.Fill(dt)
                     End Using
+
                 End Using
             End Using
 
             Session("AllowedCandidates") = dt
 
             If dt.Rows.Count = 0 Then
-                lblMessage.Text = "No available candidates. The election may not be open now."
+                lblMessage.Text = "No available candidates. The election may not be open now, or you may have already voted for all positions."
                 btnSubmitVote.Enabled = False
             Else
-                lblMessage.Text = ""
                 btnSubmitVote.Enabled = True
             End If
 
@@ -88,6 +88,7 @@ Public Class Vote
 
         If dt Is Nothing OrElse dt.Rows.Count = 0 Then
             ddlPositions.Items.Add(New ListItem("No positions available", ""))
+            rblCandidates.Items.Clear()
             Return
         End If
 
@@ -157,8 +158,11 @@ Public Class Vote
         Dim candidateID As Integer = Convert.ToInt32(rblCandidates.SelectedValue)
 
         Try
+            Dim message As String = ""
+
             Using con As New SqlConnection(connectionString)
                 Using cmd As New SqlCommand("sp_SubmitVote", con)
+
                     cmd.CommandType = CommandType.StoredProcedure
 
                     cmd.Parameters.AddWithValue("@ADUsername", adUsername)
@@ -171,16 +175,67 @@ Public Class Vote
                     Dim result As Object = cmd.ExecuteScalar()
 
                     If result IsNot Nothing Then
-                        lblMessage.Text = result.ToString()
+                        message = result.ToString()
                     Else
-                        lblMessage.Text = "Vote submitted."
+                        message = "Vote submitted."
                     End If
 
                 End Using
             End Using
 
+            If message = "Your vote has been submitted successfully." Then
+
+                AddAuditLog(
+                    "Submit Vote",
+                    "Student submitted vote for ElectionID: " & ElectionID.ToString() &
+                    ", PositionID: " & positionID.ToString()
+                )
+
+                LoadAllowedCandidates()
+                BindPositions()
+                BindCandidates()
+
+            End If
+
+            lblMessage.Text = message
+
         Catch ex As Exception
             lblMessage.Text = "Error submitting vote: " & ex.Message
+        End Try
+
+    End Sub
+
+    Private Sub AddAuditLog(actionType As String, actionDetails As String)
+
+        Try
+            If Session("ADUsername") Is Nothing Then
+                Return
+            End If
+
+            Dim adUsername As String = Session("ADUsername").ToString()
+
+            Using con As New SqlConnection(connectionString)
+
+                Dim query As String = "
+                    INSERT INTO AuditLog (ADUsername, ActionType, ActionDetails)
+                    VALUES (@ADUsername, @ActionType, @ActionDetails)
+                "
+
+                Using cmd As New SqlCommand(query, con)
+
+                    cmd.Parameters.AddWithValue("@ADUsername", adUsername)
+                    cmd.Parameters.AddWithValue("@ActionType", actionType)
+                    cmd.Parameters.AddWithValue("@ActionDetails", actionDetails)
+
+                    con.Open()
+                    cmd.ExecuteNonQuery()
+
+                End Using
+
+            End Using
+
+        Catch
+            ' If audit log fails, do not stop the voting process.
         End Try
 
     End Sub
