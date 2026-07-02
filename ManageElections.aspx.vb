@@ -44,6 +44,7 @@ Public Class ManageElections
 
         Try
             Using con As New SqlConnection(connectionString)
+
                 Dim query As String = "
                     SELECT 
                         ElectionID,
@@ -56,6 +57,7 @@ Public Class ManageElections
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
                     Dim dt As New DataTable()
 
                     Using da As New SqlDataAdapter(cmd)
@@ -66,14 +68,19 @@ Public Class ManageElections
                     gvElections.DataBind()
 
                     For Each row As GridViewRow In gvElections.Rows
-                        Dim ddl As DropDownList = TryCast(row.FindControl("ddlGridStatus"), DropDownList)
+
+                        Dim ddl As DropDownList =
+                            TryCast(row.FindControl("ddlGridStatus"), DropDownList)
 
                         If ddl IsNot Nothing Then
                             Dim status As String = dt.Rows(row.RowIndex)("Status").ToString()
                             ddl.SelectedValue = status
                         End If
+
                     Next
+
                 End Using
+
             End Using
 
         Catch ex As Exception
@@ -84,7 +91,9 @@ Public Class ManageElections
 
     Protected Sub btnAddElection_Click(sender As Object, e As EventArgs) Handles btnAddElection.Click
 
-        If txtElectionTitle.Text.Trim() = "" Then
+        Dim electionTitle As String = txtElectionTitle.Text.Trim()
+
+        If electionTitle = "" Then
             lblMessage.Text = "Please enter the election title."
             Return
         End If
@@ -109,21 +118,33 @@ Public Class ManageElections
 
         Try
             Using con As New SqlConnection(connectionString)
+
                 Dim query As String = "
                     INSERT INTO Elections (ElectionTitle, StartDateTime, EndDateTime, Status)
                     VALUES (@ElectionTitle, @StartDateTime, @EndDateTime, @Status)
                 "
 
                 Using cmd As New SqlCommand(query, con)
-                    cmd.Parameters.AddWithValue("@ElectionTitle", txtElectionTitle.Text.Trim())
+
+                    cmd.Parameters.AddWithValue("@ElectionTitle", electionTitle)
                     cmd.Parameters.AddWithValue("@StartDateTime", startDateTime)
                     cmd.Parameters.AddWithValue("@EndDateTime", endDateTime)
                     cmd.Parameters.AddWithValue("@Status", ddlStatus.SelectedValue)
 
                     con.Open()
                     cmd.ExecuteNonQuery()
+
                 End Using
+
             End Using
+
+            AddAuditLog(
+                "Add Election",
+                "Added election: " & electionTitle &
+                ", Start: " & startDateTime.ToString("yyyy-MM-dd HH:mm:ss") &
+                ", End: " & endDateTime.ToString("yyyy-MM-dd HH:mm:ss") &
+                ", Status: " & ddlStatus.SelectedValue
+            )
 
             lblMessage.Text = "Election added successfully."
 
@@ -148,15 +169,20 @@ Public Class ManageElections
             Dim electionID As Integer = Convert.ToInt32(gvElections.DataKeys(rowIndex).Value)
 
             Dim row As GridViewRow = gvElections.Rows(rowIndex)
-            Dim ddl As DropDownList = TryCast(row.FindControl("ddlGridStatus"), DropDownList)
+
+            Dim ddl As DropDownList =
+                TryCast(row.FindControl("ddlGridStatus"), DropDownList)
 
             If ddl Is Nothing Then
                 lblMessage.Text = "Status dropdown not found."
                 Return
             End If
 
+            Dim newStatus As String = ddl.SelectedValue
+
             Try
                 Using con As New SqlConnection(connectionString)
+
                     Dim query As String = "
                         UPDATE Elections
                         SET Status = @Status
@@ -164,13 +190,22 @@ Public Class ManageElections
                     "
 
                     Using cmd As New SqlCommand(query, con)
-                        cmd.Parameters.AddWithValue("@Status", ddl.SelectedValue)
+
+                        cmd.Parameters.AddWithValue("@Status", newStatus)
                         cmd.Parameters.AddWithValue("@ElectionID", electionID)
 
                         con.Open()
                         cmd.ExecuteNonQuery()
+
                     End Using
+
                 End Using
+
+                AddAuditLog(
+                    "Update Election Status",
+                    "Updated ElectionID: " & electionID.ToString() &
+                    ", New Status: " & newStatus
+                )
 
                 lblMessage.Text = "Election status updated successfully."
                 LoadElections()
@@ -180,6 +215,41 @@ Public Class ManageElections
             End Try
 
         End If
+
+    End Sub
+
+    Private Sub AddAuditLog(actionType As String, actionDetails As String)
+
+        Try
+            If Session("ADUsername") Is Nothing Then
+                Return
+            End If
+
+            Dim adminUsername As String = Session("ADUsername").ToString()
+
+            Using con As New SqlConnection(connectionString)
+
+                Dim query As String = "
+                    INSERT INTO AuditLog (ADUsername, ActionType, ActionDetails)
+                    VALUES (@ADUsername, @ActionType, @ActionDetails)
+                "
+
+                Using cmd As New SqlCommand(query, con)
+
+                    cmd.Parameters.AddWithValue("@ADUsername", adminUsername)
+                    cmd.Parameters.AddWithValue("@ActionType", actionType)
+                    cmd.Parameters.AddWithValue("@ActionDetails", actionDetails)
+
+                    con.Open()
+                    cmd.ExecuteNonQuery()
+
+                End Using
+
+            End Using
+
+        Catch
+            ' If audit log fails, do not stop the main action.
+        End Try
 
     End Sub
 
