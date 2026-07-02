@@ -45,4 +45,7 @@
         Response.Redirect("ManagePositions.aspx")
     End Sub
 
+    Protected Sub btnManageCandidates_Click(sender As Object, e As EventArgs) Handles btnManageCandidates.Click
+        Response.Redirect("ManageCandidates.aspx")
+    End Sub
 End Class

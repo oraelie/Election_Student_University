@@ -147,6 +147,7 @@
     <Content Include="Content\Site.css" />
     <Content Include="Css\AdminDashboard.css" />
     <Content Include="Css\Login.css" />
+    <Content Include="Css\ManageCandidates.css" />
     <Content Include="Css\ManageElections.css" />
     <Content Include="Css\ManagePositions.css" />
     <Content Include="Css\Results.css" />
@@ -157,6 +158,7 @@
     <Content Include="Global.asax" />
     <Content Include="Login.aspx" />
     <Content Include="Logout.aspx" />
+    <Content Include="ManageCandidates.aspx" />
     <Content Include="ManageElections.aspx" />
     <Content Include="ManagePositions.aspx" />
     <Content Include="Results.aspx" />
@@ -267,6 +269,13 @@
     </Compile>
     <Compile Include="Logout.aspx.vb">
       <DependentUpon>Logout.aspx</DependentUpon>
+      <SubType>ASPXCodebehind</SubType>
+    </Compile>
+    <Compile Include="ManageCandidates.aspx.designer.vb">
+      <DependentUpon>ManageCandidates.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ManageCandidates.aspx.vb">
+      <DependentUpon>ManageCandidates.aspx</DependentUpon>
       <SubType>ASPXCodebehind</SubType>
     </Compile>
     <Compile Include="ManageElections.aspx.designer.vb">

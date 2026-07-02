@@ -59,6 +59,15 @@ Partial Public Class AdminDashboard
 	Protected WithEvents btnManageElections As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
+	'''btnManageCandidates control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnManageCandidates As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
 	'''btnResults control.
 	'''</summary>
 	'''<remarks>

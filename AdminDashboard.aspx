@@ -27,11 +27,18 @@
                 Text="Manage Positions" 
                 CssClass="main-button" />
 
-            <asp:Button 
+             <asp:Button 
                     ID="btnManageElections" 
                     runat="server" 
                     Text="Manage Elections" 
                     CssClass="main-button" />
+    
+             <asp:Button 
+                    ID="btnManageCandidates" 
+                    runat="server" 
+                    Text="Manage Candidates" 
+                    CssClass="main-button" />   
+             <br /><br /> 
 
             <asp:Button 
                 ID="btnResults" 
