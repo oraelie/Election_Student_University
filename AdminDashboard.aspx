@@ -48,6 +48,12 @@
                 <br /><br />
 
             <asp:Button 
+                ID="btnManageVoters" 
+                runat="server" 
+                Text="Manage Voters" 
+                CssClass="main-button" />
+
+            <asp:Button 
                 ID="btnLogout" 
                 runat="server" 
                 Text="Logout" 

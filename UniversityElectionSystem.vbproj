@@ -150,6 +150,7 @@
     <Content Include="Css\ManageCandidates.css" />
     <Content Include="Css\ManageElections.css" />
     <Content Include="Css\ManagePositions.css" />
+    <Content Include="Css\ManageVoters.css" />
     <Content Include="Css\Results.css" />
     <Content Include="Css\StudentDashboard.css" />
     <Content Include="Css\Vote.css" />
@@ -161,6 +162,7 @@
     <Content Include="ManageCandidates.aspx" />
     <Content Include="ManageElections.aspx" />
     <Content Include="ManagePositions.aspx" />
+    <Content Include="ManageVoters.aspx" />
     <Content Include="Results.aspx" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
@@ -290,6 +292,13 @@
     </Compile>
     <Compile Include="ManagePositions.aspx.vb">
       <DependentUpon>ManagePositions.aspx</DependentUpon>
+      <SubType>ASPXCodebehind</SubType>
+    </Compile>
+    <Compile Include="ManageVoters.aspx.designer.vb">
+      <DependentUpon>ManageVoters.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ManageVoters.aspx.vb">
+      <DependentUpon>ManageVoters.aspx</DependentUpon>
       <SubType>ASPXCodebehind</SubType>
     </Compile>
     <Compile Include="My Project\AssemblyInfo.vb" />

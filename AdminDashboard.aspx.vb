@@ -48,4 +48,7 @@
     Protected Sub btnManageCandidates_Click(sender As Object, e As EventArgs) Handles btnManageCandidates.Click
         Response.Redirect("ManageCandidates.aspx")
     End Sub
+    Protected Sub btnManageVoters_Click(sender As Object, e As EventArgs) Handles btnManageVoters.Click
+        Response.Redirect("ManageVoters.aspx")
+    End Sub
 End Class
