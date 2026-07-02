@@ -127,6 +127,7 @@
   <ItemGroup>
     <Content Include="About.aspx" />
     <Content Include="AdminDashboard.aspx" />
+    <Content Include="AuditLog.aspx" />
     <Content Include="Contact.aspx" />
     <Content Include="Content\bootstrap-grid.css" />
     <Content Include="Content\bootstrap-grid.min.css" />
@@ -146,6 +147,7 @@
     <Content Include="Content\bootstrap.rtl.min.css" />
     <Content Include="Content\Site.css" />
     <Content Include="Css\AdminDashboard.css" />
+    <Content Include="Css\AuditLog.css" />
     <Content Include="Css\Login.css" />
     <Content Include="Css\ManageCandidates.css" />
     <Content Include="Css\ManageElections.css" />
@@ -240,6 +242,13 @@
     </Compile>
     <Compile Include="About.aspx.vb">
       <DependentUpon>About.aspx</DependentUpon>
+      <SubType>ASPXCodebehind</SubType>
+    </Compile>
+    <Compile Include="AuditLog.aspx.designer.vb">
+      <DependentUpon>AuditLog.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="AuditLog.aspx.vb">
+      <DependentUpon>AuditLog.aspx</DependentUpon>
       <SubType>ASPXCodebehind</SubType>
     </Compile>
     <Compile Include="Contact.aspx.designer.vb">

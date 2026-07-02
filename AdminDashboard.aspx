@@ -73,6 +73,16 @@
                         CssClass="card-button" />
                 </div>
 
+                <div class="dashboard-card">
+                <h3>Audit Log</h3>
+                <p>View admin actions such as adding voters, candidates, positions, and election updates.</p>
+                <asp:Button 
+                    ID="btnAuditLog" 
+                    runat="server" 
+                    Text="Open" 
+                    CssClass="card-button" />
+                 </div>
+
                 <div class="dashboard-card logout-card">
                     <h3>Logout</h3>
                     <p>End the current admin session safely.</p>
@@ -82,11 +92,8 @@
                         Text="Logout" 
                         CssClass="logout-button" />
                 </div>
-
             </div>
-
         </div>
-
     </form>
 </body>
 </html>

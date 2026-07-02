@@ -54,5 +54,8 @@
         Session.Abandon()
         Response.Redirect("Login.aspx")
     End Sub
+    Protected Sub btnAuditLog_Click(sender As Object, e As EventArgs) Handles btnAuditLog.Click
+        Response.Redirect("AuditLog.aspx")
+    End Sub
 
 End Class

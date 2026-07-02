@@ -115,9 +115,9 @@ Public Class ManageVoters
 
     Protected Sub btnAddVoter_Click(sender As Object, e As EventArgs) Handles btnAddVoter.Click
 
-        Dim adUsername As String = txtADUsername.Text.Trim()
+        Dim voterUsername As String = txtADUsername.Text.Trim()
 
-        If adUsername = "" Then
+        If voterUsername = "" Then
             lblMessage.Text = "Please enter the AD username."
             Return
         End If
@@ -139,7 +139,7 @@ Public Class ManageVoters
                 "
 
                 Using checkCmd As New SqlCommand(checkQuery, con)
-                    checkCmd.Parameters.AddWithValue("@ADUsername", adUsername)
+                    checkCmd.Parameters.AddWithValue("@ADUsername", voterUsername)
 
                     Dim exists As Integer = Convert.ToInt32(checkCmd.ExecuteScalar())
 
@@ -155,13 +155,18 @@ Public Class ManageVoters
                 "
 
                 Using cmd As New SqlCommand(insertQuery, con)
-                    cmd.Parameters.AddWithValue("@ADUsername", adUsername)
+                    cmd.Parameters.AddWithValue("@ADUsername", voterUsername)
                     cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(ddlFaculty.SelectedValue))
 
                     cmd.ExecuteNonQuery()
                 End Using
 
             End Using
+
+            AddAuditLog(
+                "Add Voter",
+                "Added eligible voter: " & voterUsername & ", FacultyID: " & ddlFaculty.SelectedValue
+            )
 
             lblMessage.Text = "Eligible voter added successfully."
             txtADUsername.Text = ""
@@ -179,7 +184,7 @@ Public Class ManageVoters
         If e.CommandName = "UpdateActive" Then
 
             Dim rowIndex As Integer = Convert.ToInt32(e.CommandArgument)
-            Dim adUsername As String = gvVoters.DataKeys(rowIndex).Value.ToString()
+            Dim voterUsername As String = gvVoters.DataKeys(rowIndex).Value.ToString()
 
             Dim row As GridViewRow = gvVoters.Rows(rowIndex)
             Dim chk As CheckBox = TryCast(row.FindControl("chkIsActive"), CheckBox)
@@ -200,13 +205,18 @@ Public Class ManageVoters
 
                     Using cmd As New SqlCommand(query, con)
                         cmd.Parameters.AddWithValue("@IsActive", chk.Checked)
-                        cmd.Parameters.AddWithValue("@ADUsername", adUsername)
+                        cmd.Parameters.AddWithValue("@ADUsername", voterUsername)
 
                         con.Open()
                         cmd.ExecuteNonQuery()
                     End Using
 
                 End Using
+
+                AddAuditLog(
+                    "Update Voter",
+                    "Updated voter status: " & voterUsername & ", Active = " & chk.Checked.ToString()
+                )
 
                 lblMessage.Text = "Voter updated successfully."
                 LoadVoters()
@@ -216,6 +226,39 @@ Public Class ManageVoters
             End Try
 
         End If
+
+    End Sub
+
+    Private Sub AddAuditLog(actionType As String, actionDetails As String)
+
+        Try
+            If Session("ADUsername") Is Nothing Then
+                Return
+            End If
+
+            Dim adminUsername As String = Session("ADUsername").ToString()
+
+            Using con As New SqlConnection(connectionString)
+
+                Dim query As String = "
+                    INSERT INTO AuditLog (ADUsername, ActionType, ActionDetails)
+                    VALUES (@ADUsername, @ActionType, @ActionDetails)
+                "
+
+                Using cmd As New SqlCommand(query, con)
+                    cmd.Parameters.AddWithValue("@ADUsername", adminUsername)
+                    cmd.Parameters.AddWithValue("@ActionType", actionType)
+                    cmd.Parameters.AddWithValue("@ActionDetails", actionDetails)
+
+                    con.Open()
+                    cmd.ExecuteNonQuery()
+                End Using
+
+            End Using
+
+        Catch
+            ' If audit log fails, do not stop the main action.
+        End Try
 
     End Sub
 
