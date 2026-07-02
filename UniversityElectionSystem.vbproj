@@ -148,6 +148,7 @@
     <Content Include="Css\AdminDashboard.css" />
     <Content Include="Css\Login.css" />
     <Content Include="Css\StudentDashboard.css" />
+    <Content Include="Css\Vote.css" />
     <Content Include="Default.aspx" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
@@ -210,6 +211,7 @@
     <Content Include="Scripts\WebForms\WebUIValidation.js" />
     <Content Include="StudentDashboard.aspx" />
     <Content Include="TestConnection.aspx" />
+    <Content Include="Vote.aspx" />
     <Content Include="Web.config" />
     <Content Include="Bundle.config" />
   </ItemGroup>
@@ -314,6 +316,13 @@
     </Compile>
     <Compile Include="Site.Mobile.Master.designer.vb">
       <DependentUpon>Site.Mobile.Master</DependentUpon>
+    </Compile>
+    <Compile Include="Vote.aspx.designer.vb">
+      <DependentUpon>Vote.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Vote.aspx.vb">
+      <DependentUpon>Vote.aspx</DependentUpon>
+      <SubType>ASPXCodebehind</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
