@@ -35,6 +35,8 @@ Public Class Vote
         lblUsername.Text = "Username: " & adUsername
 
         If Not IsPostBack Then
+            pnlMessage.Visible = False
+
             LoadOpenElections()
             LoadAllowedCandidates()
             BindPositions()
@@ -71,7 +73,8 @@ Public Class Vote
                     If dt.Rows.Count = 0 Then
                         ddlElections.Items.Add(New ListItem("No open elections available", ""))
                         btnSubmitVote.Enabled = False
-                        lblMessage.Text = "There are no open elections available now."
+
+                        ShowMessage("There are no open elections available now.", "warning")
                         Return
                     End If
 
@@ -87,8 +90,8 @@ Public Class Vote
             End Using
 
         Catch ex As Exception
-            lblMessage.Text = "Error loading elections: " & ex.Message
             btnSubmitVote.Enabled = False
+            ShowMessage("Error loading elections: " & ex.Message, "error")
         End Try
 
     End Sub
@@ -129,16 +132,21 @@ Public Class Vote
             Session("AllowedCandidates") = dt
 
             If dt.Rows.Count = 0 Then
-                lblMessage.Text = "No available candidates for this election. You may have already voted for all positions, or no candidates are active for your faculty."
                 btnSubmitVote.Enabled = False
+
+                ShowMessage(
+                    "No available candidates for this election. You may have already voted for all positions, or no candidates are active for your faculty.",
+                    "warning"
+                )
             Else
-                lblMessage.Text = ""
                 btnSubmitVote.Enabled = True
+                pnlMessage.Visible = False
+                lblMessage.Text = ""
             End If
 
         Catch ex As Exception
-            lblMessage.Text = "Error loading candidates: " & ex.Message
             btnSubmitVote.Enabled = False
+            ShowMessage("Error loading candidates: " & ex.Message, "error")
         End Try
 
     End Sub
@@ -156,6 +164,7 @@ Public Class Vote
         End If
 
         Dim positionView As DataView = dt.DefaultView
+
         Dim positionTable As DataTable =
             positionView.ToTable(True, "PositionID", "PositionTitle")
 
@@ -215,29 +224,33 @@ Public Class Vote
     End Sub
 
     Protected Sub ddlElections_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ddlElections.SelectedIndexChanged
+
         LoadAllowedCandidates()
         BindPositions()
         BindCandidates()
+
     End Sub
 
     Protected Sub ddlPositions_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ddlPositions.SelectedIndexChanged
+
         BindCandidates()
+
     End Sub
 
-    Protected Sub btnSubmitVote_Click(sender As Object, e As EventArgs) Handles btnSubmitVote.Click
+    Protected Sub btnSubmitVote_Click(sender As Object, e As EventArgs) Handles btnConfirmVote.Click
 
         If ddlElections.SelectedValue = "" Then
-            lblMessage.Text = "Please select an election."
+            ShowMessage("Please select an election.", "warning")
             Return
         End If
 
         If ddlPositions.SelectedValue = "" Then
-            lblMessage.Text = "Please select a position."
+            ShowMessage("Please select a position.", "warning")
             Return
         End If
 
         If rblCandidates.SelectedValue = "" Then
-            lblMessage.Text = "Please select a candidate."
+            ShowMessage("Please select a candidate.", "warning")
             Return
         End If
 
@@ -290,10 +303,14 @@ Public Class Vote
 
             End If
 
-            lblMessage.Text = message
+            If message.Contains("successfully") Then
+                ShowMessage(message, "success")
+            Else
+                ShowMessage(message, "warning")
+            End If
 
         Catch ex As Exception
-            lblMessage.Text = "Error submitting vote: " & ex.Message
+            ShowMessage("Error submitting vote: " & ex.Message, "error")
         End Try
 
     End Sub
@@ -333,14 +350,33 @@ Public Class Vote
 
     End Sub
 
+    Private Sub ShowMessage(message As String, messageType As String)
+
+        lblMessage.Text = message
+        pnlMessage.Visible = True
+
+        If messageType = "success" Then
+            pnlMessage.CssClass = "alert-box alert-success"
+        ElseIf messageType = "warning" Then
+            pnlMessage.CssClass = "alert-box alert-warning"
+        Else
+            pnlMessage.CssClass = "alert-box alert-error"
+        End If
+
+    End Sub
+
     Protected Sub btnBack_Click(sender As Object, e As EventArgs) Handles btnBack.Click
+
         Response.Redirect("StudentDashboard.aspx")
+
     End Sub
 
     Protected Sub btnLogout_Click(sender As Object, e As EventArgs) Handles btnLogout.Click
+
         Session.Clear()
         Session.Abandon()
         Response.Redirect("Login.aspx")
+
     End Sub
 
 End Class

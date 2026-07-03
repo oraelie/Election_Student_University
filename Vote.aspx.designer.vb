@@ -41,6 +41,15 @@ Partial Public Class Vote
 	Protected WithEvents lblUsername As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
+	'''pnlMessage control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents pnlMessage As Global.System.Web.UI.WebControls.Panel
+
+	'''<summary>
 	'''lblMessage control.
 	'''</summary>
 	'''<remarks>
@@ -102,4 +111,13 @@ Partial Public Class Vote
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents btnLogout As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''btnConfirmVote control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnConfirmVote As Global.System.Web.UI.WebControls.Button
 End Class

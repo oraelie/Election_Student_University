@@ -5,7 +5,7 @@
 <html>
 <head runat="server">
     <title>Vote</title>
-    <link href="Css/Vote.css" rel="stylesheet" type="text/css" />
+    <link href="Css/Vote.css?v=3" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
@@ -23,7 +23,9 @@
 
             <hr />
 
-            <asp:Label ID="lblMessage" runat="server" CssClass="message-label"></asp:Label>
+            <asp:Panel ID="pnlMessage" runat="server" CssClass="alert-box" Visible="False">
+                <asp:Label ID="lblMessage" runat="server"></asp:Label>
+            </asp:Panel>
 
             <div class="form-group">
                 <label>Select Open Election</label>
@@ -58,12 +60,13 @@
             </div>
 
             <div class="button-area">
+
                 <asp:Button 
                     ID="btnSubmitVote" 
                     runat="server" 
                     Text="Submit Vote" 
                     CssClass="submit-button"
-                    OnClientClick="return confirm('Are you sure you want to submit your vote? After submission, you cannot change your vote for this position.');" />
+                    OnClientClick="showVoteConfirm(); return false;" />
 
                 <asp:Button 
                     ID="btnBack" 
@@ -76,9 +79,54 @@
                     runat="server" 
                     Text="Logout" 
                     CssClass="logout-button" />
+
             </div>
 
         </div>
+
+        <!-- Custom Confirmation Popup -->
+        <div id="voteConfirmOverlay" class="confirm-overlay" style="display:none;">
+            <div class="confirm-box">
+
+                <h3>Confirm Vote Submission</h3>
+
+                <p class="confirm-text">
+                    Please confirm that you want to submit your vote.
+                </p>
+
+                <p class="confirm-warning">
+                    Once submitted, your vote for this position cannot be changed.
+                </p>
+
+                <div class="confirm-buttons">
+
+                    <asp:Button 
+                        ID="btnConfirmVote" 
+                        runat="server" 
+                        Text="Yes, Submit Vote" 
+                        CssClass="yes-button" />
+
+                    <button 
+                        type="button" 
+                        class="no-button" 
+                        onclick="hideVoteConfirm()">
+                        Cancel
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+
+        <script type="text/javascript">
+			function showVoteConfirm() {
+				document.getElementById("voteConfirmOverlay").style.display = "flex";
+			}
+
+			function hideVoteConfirm() {
+				document.getElementById("voteConfirmOverlay").style.display = "none";
+			}
+		</script>
 
     </form>
 </body>
