@@ -50,6 +50,15 @@ Partial Public Class Vote
 	Protected WithEvents lblMessage As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
+	'''ddlElections control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlElections As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
 	'''ddlPositions control.
 	'''</summary>
 	'''<remarks>

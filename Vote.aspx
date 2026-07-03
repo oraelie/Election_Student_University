@@ -26,7 +26,19 @@
             <asp:Label ID="lblMessage" runat="server" CssClass="message-label"></asp:Label>
 
             <div class="form-group">
+                <label>Select Open Election</label>
+
+                <asp:DropDownList 
+                    ID="ddlElections" 
+                    runat="server" 
+                    CssClass="dropdown"
+                    AutoPostBack="True">
+                </asp:DropDownList>
+            </div>
+
+            <div class="form-group">
                 <label>Select Position</label>
+
                 <asp:DropDownList 
                     ID="ddlPositions" 
                     runat="server" 
@@ -50,7 +62,8 @@
                     ID="btnSubmitVote" 
                     runat="server" 
                     Text="Submit Vote" 
-                    CssClass="submit-button" />
+                    CssClass="submit-button"
+                    OnClientClick="return confirm('Are you sure you want to submit your vote? After submission, you cannot change your vote for this position.');" />
 
                 <asp:Button 
                     ID="btnBack" 

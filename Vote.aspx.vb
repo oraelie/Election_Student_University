@@ -8,8 +8,6 @@ Public Class Vote
     Private ReadOnly connectionString As String =
         ConfigurationManager.ConnectionStrings("ElectionConnection").ConnectionString
 
-    Private Const ElectionID As Integer = 1
-
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As EventArgs) Handles Me.Load
 
         If Session("ADUsername") Is Nothing OrElse Session("UserRole") Is Nothing Then
@@ -37,6 +35,7 @@ Public Class Vote
         lblUsername.Text = "Username: " & adUsername
 
         If Not IsPostBack Then
+            LoadOpenElections()
             LoadAllowedCandidates()
             BindPositions()
             BindCandidates()
@@ -44,32 +43,96 @@ Public Class Vote
 
     End Sub
 
+    Private Sub LoadOpenElections()
+
+        Try
+            Using con As New SqlConnection(connectionString)
+
+                Dim query As String = "
+                    SELECT 
+                        ElectionID,
+                        ElectionTitle
+                    FROM Elections
+                    WHERE Status = 'Open'
+                    AND GETDATE() BETWEEN StartDateTime AND EndDateTime
+                    ORDER BY StartDateTime DESC
+                "
+
+                Using cmd As New SqlCommand(query, con)
+
+                    Dim dt As New DataTable()
+
+                    Using da As New SqlDataAdapter(cmd)
+                        da.Fill(dt)
+                    End Using
+
+                    ddlElections.Items.Clear()
+
+                    If dt.Rows.Count = 0 Then
+                        ddlElections.Items.Add(New ListItem("No open elections available", ""))
+                        btnSubmitVote.Enabled = False
+                        lblMessage.Text = "There are no open elections available now."
+                        Return
+                    End If
+
+                    ddlElections.DataSource = dt
+                    ddlElections.DataTextField = "ElectionTitle"
+                    ddlElections.DataValueField = "ElectionID"
+                    ddlElections.DataBind()
+
+                    btnSubmitVote.Enabled = True
+
+                End Using
+
+            End Using
+
+        Catch ex As Exception
+            lblMessage.Text = "Error loading elections: " & ex.Message
+            btnSubmitVote.Enabled = False
+        End Try
+
+    End Sub
+
     Private Sub LoadAllowedCandidates()
 
+        ddlPositions.Items.Clear()
+        rblCandidates.Items.Clear()
+
+        If ddlElections.SelectedValue = "" Then
+            Session("AllowedCandidates") = Nothing
+            ddlPositions.Items.Add(New ListItem("No positions available", ""))
+            btnSubmitVote.Enabled = False
+            Return
+        End If
+
         Dim adUsername As String = Session("ADUsername").ToString()
+        Dim electionID As Integer = Convert.ToInt32(ddlElections.SelectedValue)
         Dim dt As New DataTable()
 
         Try
             Using con As New SqlConnection(connectionString)
+
                 Using cmd As New SqlCommand("sp_GetCandidatesForVoter", con)
 
                     cmd.CommandType = CommandType.StoredProcedure
                     cmd.Parameters.AddWithValue("@ADUsername", adUsername)
-                    cmd.Parameters.AddWithValue("@ElectionID", ElectionID)
+                    cmd.Parameters.AddWithValue("@ElectionID", electionID)
 
                     Using da As New SqlDataAdapter(cmd)
                         da.Fill(dt)
                     End Using
 
                 End Using
+
             End Using
 
             Session("AllowedCandidates") = dt
 
             If dt.Rows.Count = 0 Then
-                lblMessage.Text = "No available candidates. The election may not be open now, or you may have already voted for all positions."
+                lblMessage.Text = "No available candidates for this election. You may have already voted for all positions, or no candidates are active for your faculty."
                 btnSubmitVote.Enabled = False
             Else
+                lblMessage.Text = ""
                 btnSubmitVote.Enabled = True
             End If
 
@@ -93,7 +156,8 @@ Public Class Vote
         End If
 
         Dim positionView As DataView = dt.DefaultView
-        Dim positionTable As DataTable = positionView.ToTable(True, "PositionID", "PositionTitle")
+        Dim positionTable As DataTable =
+            positionView.ToTable(True, "PositionID", "PositionTitle")
 
         ddlPositions.DataSource = positionTable
         ddlPositions.DataTextField = "PositionTitle"
@@ -116,18 +180,31 @@ Public Class Vote
             Return
         End If
 
-        Dim selectedPositionID As Integer = Convert.ToInt32(ddlPositions.SelectedValue)
+        Dim selectedPositionID As Integer =
+            Convert.ToInt32(ddlPositions.SelectedValue)
 
-        Dim rows() As DataRow = dt.Select("PositionID = " & selectedPositionID)
+        Dim rows() As DataRow =
+            dt.Select("PositionID = " & selectedPositionID)
 
         For Each row As DataRow In rows
+
+            Dim majorText As String = row("Major").ToString()
+            Dim yearText As String = row("YearLevel").ToString()
+
+            If majorText = "" Then
+                majorText = "No major"
+            End If
+
+            If yearText = "" Then
+                yearText = "N/A"
+            End If
 
             Dim candidateText As String =
                 row("FullName").ToString() &
                 " - " &
-                row("Major").ToString() &
+                majorText &
                 " - Year " &
-                row("YearLevel").ToString()
+                yearText
 
             Dim candidateID As String = row("CandidateID").ToString()
 
@@ -137,11 +214,22 @@ Public Class Vote
 
     End Sub
 
+    Protected Sub ddlElections_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ddlElections.SelectedIndexChanged
+        LoadAllowedCandidates()
+        BindPositions()
+        BindCandidates()
+    End Sub
+
     Protected Sub ddlPositions_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ddlPositions.SelectedIndexChanged
         BindCandidates()
     End Sub
 
     Protected Sub btnSubmitVote_Click(sender As Object, e As EventArgs) Handles btnSubmitVote.Click
+
+        If ddlElections.SelectedValue = "" Then
+            lblMessage.Text = "Please select an election."
+            Return
+        End If
 
         If ddlPositions.SelectedValue = "" Then
             lblMessage.Text = "Please select a position."
@@ -154,6 +242,7 @@ Public Class Vote
         End If
 
         Dim adUsername As String = Session("ADUsername").ToString()
+        Dim electionID As Integer = Convert.ToInt32(ddlElections.SelectedValue)
         Dim positionID As Integer = Convert.ToInt32(ddlPositions.SelectedValue)
         Dim candidateID As Integer = Convert.ToInt32(rblCandidates.SelectedValue)
 
@@ -161,12 +250,13 @@ Public Class Vote
             Dim message As String = ""
 
             Using con As New SqlConnection(connectionString)
+
                 Using cmd As New SqlCommand("sp_SubmitVote", con)
 
                     cmd.CommandType = CommandType.StoredProcedure
 
                     cmd.Parameters.AddWithValue("@ADUsername", adUsername)
-                    cmd.Parameters.AddWithValue("@ElectionID", ElectionID)
+                    cmd.Parameters.AddWithValue("@ElectionID", electionID)
                     cmd.Parameters.AddWithValue("@PositionID", positionID)
                     cmd.Parameters.AddWithValue("@CandidateID", candidateID)
 
@@ -181,19 +271,22 @@ Public Class Vote
                     End If
 
                 End Using
+
             End Using
 
             If message = "Your vote has been submitted successfully." Then
 
                 AddAuditLog(
                     "Submit Vote",
-                    "Student submitted vote for ElectionID: " & ElectionID.ToString() &
+                    "Student submitted vote for ElectionID: " & electionID.ToString() &
                     ", PositionID: " & positionID.ToString()
                 )
 
                 LoadAllowedCandidates()
                 BindPositions()
                 BindCandidates()
+
+                message = "Your vote has been submitted successfully. This position is now completed and removed from your available voting list."
 
             End If
 
