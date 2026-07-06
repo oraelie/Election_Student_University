@@ -21,7 +21,9 @@
                 <asp:Label ID="lblUsername" runat="server" CssClass="username-label"></asp:Label>
             </div>
 
-            <asp:Label ID="lblMessage" runat="server" CssClass="message-label"></asp:Label>
+            <asp:Panel ID="pnlMessage" runat="server" CssClass="alert-box" Visible="False">
+                <asp:Label ID="lblMessage" runat="server"></asp:Label>
+            </asp:Panel>
 
             <div class="form-box">
                 <h3>Add New Eligible Voter</h3>
@@ -56,11 +58,20 @@
                 AutoGenerateColumns="False"
                 CssClass="data-table"
                 GridLines="None"
-                DataKeyNames="ADUsername">
+                DataKeyNames="ADUsername,FacultyID">
 
                 <Columns>
                     <asp:BoundField DataField="ADUsername" HeaderText="AD Username" ReadOnly="True" />
-                    <asp:BoundField DataField="FacultyName" HeaderText="Faculty" />
+
+                    <asp:TemplateField HeaderText="Faculty">
+                        <ItemTemplate>
+                            <asp:DropDownList 
+                                ID="ddlGridFaculty" 
+                                runat="server" 
+                                CssClass="grid-dropdown">
+                            </asp:DropDownList>
+                        </ItemTemplate>
+                    </asp:TemplateField>
 
                     <asp:TemplateField HeaderText="Active">
                         <ItemTemplate>
@@ -74,11 +85,11 @@
                     <asp:TemplateField HeaderText="Action">
                         <ItemTemplate>
                             <asp:Button 
-                                ID="btnUpdateActive" 
+                                ID="btnUpdateVoter" 
                                 runat="server" 
                                 Text="Update" 
                                 CssClass="small-button" 
-                                CommandName="UpdateActive" 
+                                CommandName="UpdateVoter" 
                                 CommandArgument='<%# Container.DataItemIndex %>' />
                         </ItemTemplate>
                     </asp:TemplateField>

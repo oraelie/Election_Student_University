@@ -8,6 +8,15 @@ Public Class ManageVoters
     Private ReadOnly connectionString As String =
         ConfigurationManager.ConnectionStrings("ElectionConnection").ConnectionString
 
+    Private Property FacultiesTable As DataTable
+        Get
+            Return TryCast(ViewState("FacultiesTable"), DataTable)
+        End Get
+        Set(value As DataTable)
+            ViewState("FacultiesTable") = value
+        End Set
+    End Property
+
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As EventArgs) Handles Me.Load
 
         If Session("ADUsername") Is Nothing OrElse Session("UserRole") Is Nothing Then
@@ -35,6 +44,7 @@ Public Class ManageVoters
         lblUsername.Text = "Username: " & adUsername
 
         If Not IsPostBack Then
+            pnlMessage.Visible = False
             LoadFaculties()
             LoadVoters()
         End If
@@ -61,6 +71,8 @@ Public Class ManageVoters
                         da.Fill(dt)
                     End Using
 
+                    FacultiesTable = dt
+
                     ddlFaculty.DataSource = dt
                     ddlFaculty.DataTextField = "FacultyName"
                     ddlFaculty.DataValueField = "FacultyID"
@@ -71,7 +83,7 @@ Public Class ManageVoters
             End Using
 
         Catch ex As Exception
-            lblMessage.Text = "Error loading faculties: " & ex.Message
+            ShowMessage("Error loading faculties: " & ex.Message, "error")
         End Try
 
     End Sub
@@ -84,6 +96,7 @@ Public Class ManageVoters
                 Dim query As String = "
                     SELECT 
                         V.ADUsername,
+                        V.FacultyID,
                         F.FacultyName,
                         V.IsActive
                     FROM EligibleVoters V
@@ -103,13 +116,46 @@ Public Class ManageVoters
                     gvVoters.DataSource = dt
                     gvVoters.DataBind()
 
+                    BindFacultyDropdownsInGrid(dt)
+
                 End Using
 
             End Using
 
         Catch ex As Exception
-            lblMessage.Text = "Error loading voters: " & ex.Message
+            ShowMessage("Error loading voters: " & ex.Message, "error")
         End Try
+
+    End Sub
+
+    Private Sub BindFacultyDropdownsInGrid(votersTable As DataTable)
+
+        If FacultiesTable Is Nothing Then
+            Return
+        End If
+
+        For Each row As GridViewRow In gvVoters.Rows
+
+            Dim ddl As DropDownList =
+                TryCast(row.FindControl("ddlGridFaculty"), DropDownList)
+
+            If ddl IsNot Nothing Then
+
+                ddl.DataSource = FacultiesTable
+                ddl.DataTextField = "FacultyName"
+                ddl.DataValueField = "FacultyID"
+                ddl.DataBind()
+
+                Dim currentFacultyID As String =
+                    votersTable.Rows(row.RowIndex)("FacultyID").ToString()
+
+                If ddl.Items.FindByValue(currentFacultyID) IsNot Nothing Then
+                    ddl.SelectedValue = currentFacultyID
+                End If
+
+            End If
+
+        Next
 
     End Sub
 
@@ -118,12 +164,12 @@ Public Class ManageVoters
         Dim voterUsername As String = txtADUsername.Text.Trim()
 
         If voterUsername = "" Then
-            lblMessage.Text = "Please enter the AD username."
+            ShowMessage("Please enter the AD username.", "warning")
             Return
         End If
 
         If ddlFaculty.SelectedValue = "" Then
-            lblMessage.Text = "Please select a faculty."
+            ShowMessage("Please select a faculty.", "warning")
             Return
         End If
 
@@ -139,14 +185,17 @@ Public Class ManageVoters
                 "
 
                 Using checkCmd As New SqlCommand(checkQuery, con)
+
                     checkCmd.Parameters.AddWithValue("@ADUsername", voterUsername)
 
-                    Dim exists As Integer = Convert.ToInt32(checkCmd.ExecuteScalar())
+                    Dim exists As Integer =
+                        Convert.ToInt32(checkCmd.ExecuteScalar())
 
                     If exists > 0 Then
-                        lblMessage.Text = "This voter already exists. You can activate or deactivate the voter from the table."
+                        ShowMessage("This voter already exists. You can update the voter faculty or active status from the table.", "warning")
                         Return
                     End If
+
                 End Using
 
                 Dim insertQuery As String = "
@@ -155,74 +204,108 @@ Public Class ManageVoters
                 "
 
                 Using cmd As New SqlCommand(insertQuery, con)
+
                     cmd.Parameters.AddWithValue("@ADUsername", voterUsername)
                     cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(ddlFaculty.SelectedValue))
 
                     cmd.ExecuteNonQuery()
+
                 End Using
 
             End Using
 
             AddAuditLog(
                 "Add Voter",
-                "Added eligible voter: " & voterUsername & ", FacultyID: " & ddlFaculty.SelectedValue
+                "Added eligible voter: " & voterUsername &
+                ", FacultyID: " & ddlFaculty.SelectedValue
             )
 
-            lblMessage.Text = "Eligible voter added successfully."
             txtADUsername.Text = ""
 
             LoadVoters()
 
+            ShowMessage("Eligible voter added successfully.", "success")
+
         Catch ex As Exception
-            lblMessage.Text = "Error adding voter: " & ex.Message
+            ShowMessage("Error adding voter: " & ex.Message, "error")
         End Try
 
     End Sub
 
     Protected Sub gvVoters_RowCommand(sender As Object, e As GridViewCommandEventArgs) Handles gvVoters.RowCommand
 
-        If e.CommandName = "UpdateActive" Then
+        If e.CommandName = "UpdateVoter" Then
 
-            Dim rowIndex As Integer = Convert.ToInt32(e.CommandArgument)
-            Dim voterUsername As String = gvVoters.DataKeys(rowIndex).Value.ToString()
+            Dim rowIndex As Integer =
+                Convert.ToInt32(e.CommandArgument)
+
+            Dim voterUsername As String =
+                gvVoters.DataKeys(rowIndex).Values("ADUsername").ToString()
+
+            Dim oldFacultyID As String =
+                gvVoters.DataKeys(rowIndex).Values("FacultyID").ToString()
 
             Dim row As GridViewRow = gvVoters.Rows(rowIndex)
-            Dim chk As CheckBox = TryCast(row.FindControl("chkIsActive"), CheckBox)
 
-            If chk Is Nothing Then
-                lblMessage.Text = "Active checkbox not found."
+            Dim ddl As DropDownList =
+                TryCast(row.FindControl("ddlGridFaculty"), DropDownList)
+
+            Dim chk As CheckBox =
+                TryCast(row.FindControl("chkIsActive"), CheckBox)
+
+            If ddl Is Nothing Then
+                ShowMessage("Faculty dropdown not found.", "error")
                 Return
             End If
+
+            If chk Is Nothing Then
+                ShowMessage("Active checkbox not found.", "error")
+                Return
+            End If
+
+            Dim newFacultyID As Integer =
+                Convert.ToInt32(ddl.SelectedValue)
+
+            Dim isActive As Boolean = chk.Checked
 
             Try
                 Using con As New SqlConnection(connectionString)
 
                     Dim query As String = "
                         UPDATE EligibleVoters
-                        SET IsActive = @IsActive
+                        SET 
+                            FacultyID = @FacultyID,
+                            IsActive = @IsActive
                         WHERE ADUsername = @ADUsername
                     "
 
                     Using cmd As New SqlCommand(query, con)
-                        cmd.Parameters.AddWithValue("@IsActive", chk.Checked)
+
+                        cmd.Parameters.AddWithValue("@FacultyID", newFacultyID)
+                        cmd.Parameters.AddWithValue("@IsActive", isActive)
                         cmd.Parameters.AddWithValue("@ADUsername", voterUsername)
 
                         con.Open()
                         cmd.ExecuteNonQuery()
+
                     End Using
 
                 End Using
 
                 AddAuditLog(
                     "Update Voter",
-                    "Updated voter status: " & voterUsername & ", Active = " & chk.Checked.ToString()
+                    "Updated voter: " & voterUsername &
+                    ", Old FacultyID: " & oldFacultyID &
+                    ", New FacultyID: " & newFacultyID.ToString() &
+                    ", Active = " & isActive.ToString()
                 )
 
-                lblMessage.Text = "Voter updated successfully."
                 LoadVoters()
 
+                ShowMessage("Voter updated successfully.", "success")
+
             Catch ex As Exception
-                lblMessage.Text = "Error updating voter: " & ex.Message
+                ShowMessage("Error updating voter: " & ex.Message, "error")
             End Try
 
         End If
@@ -246,12 +329,14 @@ Public Class ManageVoters
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
                     cmd.Parameters.AddWithValue("@ADUsername", adminUsername)
                     cmd.Parameters.AddWithValue("@ActionType", actionType)
                     cmd.Parameters.AddWithValue("@ActionDetails", actionDetails)
 
                     con.Open()
                     cmd.ExecuteNonQuery()
+
                 End Using
 
             End Using
@@ -262,14 +347,33 @@ Public Class ManageVoters
 
     End Sub
 
+    Private Sub ShowMessage(message As String, messageType As String)
+
+        lblMessage.Text = message
+        pnlMessage.Visible = True
+
+        If messageType = "success" Then
+            pnlMessage.CssClass = "alert-box alert-success"
+        ElseIf messageType = "warning" Then
+            pnlMessage.CssClass = "alert-box alert-warning"
+        Else
+            pnlMessage.CssClass = "alert-box alert-error"
+        End If
+
+    End Sub
+
     Protected Sub btnBack_Click(sender As Object, e As EventArgs) Handles btnBack.Click
+
         Response.Redirect("AdminDashboard.aspx")
+
     End Sub
 
     Protected Sub btnLogout_Click(sender As Object, e As EventArgs) Handles btnLogout.Click
+
         Session.Clear()
         Session.Abandon()
         Response.Redirect("Login.aspx")
+
     End Sub
 
 End Class
