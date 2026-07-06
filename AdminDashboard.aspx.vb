@@ -57,5 +57,8 @@
     Protected Sub btnAuditLog_Click(sender As Object, e As EventArgs) Handles btnAuditLog.Click
         Response.Redirect("AuditLog.aspx")
     End Sub
+    Protected Sub btnManageFaculties_Click(sender As Object, e As EventArgs) Handles btnManageFaculties.Click
+        Response.Redirect("ManageFaculties.aspx")
+    End Sub
 
 End Class

@@ -151,6 +151,7 @@
     <Content Include="Css\Login.css" />
     <Content Include="Css\ManageCandidates.css" />
     <Content Include="Css\ManageElections.css" />
+    <Content Include="Css\ManageFaculties.css" />
     <Content Include="Css\ManagePositions.css" />
     <Content Include="Css\ManageVoters.css" />
     <Content Include="Css\Results.css" />
@@ -163,6 +164,7 @@
     <Content Include="Logout.aspx" />
     <Content Include="ManageCandidates.aspx" />
     <Content Include="ManageElections.aspx" />
+    <Content Include="ManageFaculties.aspx" />
     <Content Include="ManagePositions.aspx" />
     <Content Include="ManageVoters.aspx" />
     <Content Include="Results.aspx" />
@@ -294,6 +296,13 @@
     </Compile>
     <Compile Include="ManageElections.aspx.vb">
       <DependentUpon>ManageElections.aspx</DependentUpon>
+      <SubType>ASPXCodebehind</SubType>
+    </Compile>
+    <Compile Include="ManageFaculties.aspx.designer.vb">
+      <DependentUpon>ManageFaculties.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="ManageFaculties.aspx.vb">
+      <DependentUpon>ManageFaculties.aspx</DependentUpon>
       <SubType>ASPXCodebehind</SubType>
     </Compile>
     <Compile Include="ManagePositions.aspx.designer.vb">

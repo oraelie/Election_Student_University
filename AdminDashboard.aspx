@@ -53,6 +53,17 @@
                         CssClass="card-button" />
                 </div>
 
+                                <div class="dashboard-card">
+                    <h3>Manage Faculties</h3>
+                    <p>Add faculties and activate or deactivate them for voters, positions, and candidates.</p>
+                    <asp:Button 
+                        ID="btnManageFaculties" 
+                        runat="server" 
+                        Text="Open" 
+                        CssClass="card-button" />
+                </div>
+
+
                 <div class="dashboard-card">
                     <h3>Manage Voters</h3>
                     <p>Add eligible AD users and assign them to faculties.</p>
