@@ -41,6 +41,15 @@ Partial Public Class Results
 	Protected WithEvents lblUsername As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
+	'''pnlMessage control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents pnlMessage As Global.System.Web.UI.WebControls.Panel
+
+	'''<summary>
 	'''lblMessage control.
 	'''</summary>
 	'''<remarks>
@@ -50,13 +59,13 @@ Partial Public Class Results
 	Protected WithEvents lblMessage As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
-	'''gvResults control.
+	'''ddlElections control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents gvResults As Global.System.Web.UI.WebControls.GridView
+	Protected WithEvents ddlElections As Global.System.Web.UI.WebControls.DropDownList
 
 	'''<summary>
 	'''btnRefresh control.
@@ -66,6 +75,15 @@ Partial Public Class Results
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents btnRefresh As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''gvResults control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents gvResults As Global.System.Web.UI.WebControls.GridView
 
 	'''<summary>
 	'''btnBack control.

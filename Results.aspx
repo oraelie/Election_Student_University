@@ -21,7 +21,28 @@
                 <asp:Label ID="lblUsername" runat="server" CssClass="username-label"></asp:Label>
             </div>
 
-            <asp:Label ID="lblMessage" runat="server" CssClass="message-label"></asp:Label>
+            <asp:Panel ID="pnlMessage" runat="server" CssClass="alert-box" Visible="False">
+                <asp:Label ID="lblMessage" runat="server"></asp:Label>
+            </asp:Panel>
+
+            <div class="filter-box">
+                <label>Select Election</label>
+
+                <asp:DropDownList 
+                    ID="ddlElections" 
+                    runat="server" 
+                    CssClass="dropdown"
+                    AutoPostBack="True">
+                </asp:DropDownList>
+            </div>
+
+            <div class="button-area top-buttons">
+                <asp:Button 
+                    ID="btnRefresh" 
+                    runat="server" 
+                    Text="Refresh Results" 
+                    CssClass="main-button" />
+            </div>
 
             <asp:GridView 
                 ID="gvResults" 
@@ -45,12 +66,6 @@
             </asp:GridView>
 
             <div class="button-area">
-                <asp:Button 
-                    ID="btnRefresh" 
-                    runat="server" 
-                    Text="Refresh Results" 
-                    CssClass="main-button" />
-
                 <asp:Button 
                     ID="btnBack" 
                     runat="server" 
