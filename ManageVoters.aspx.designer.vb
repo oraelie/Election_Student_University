@@ -131,6 +131,15 @@ Partial Public Class ManageVoters
 	Protected WithEvents btnClearFilter As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
+	'''btnExportExcel control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnExportExcel As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
 	'''gvVoters control.
 	'''</summary>
 	'''<remarks>

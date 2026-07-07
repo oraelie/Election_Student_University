@@ -1,6 +1,8 @@
 ﻿Imports System.Data
 Imports System.Data.SqlClient
 Imports System.Configuration
+Imports System.Text
+Imports System.Web
 
 Public Class ManageVoters
     Inherits System.Web.UI.Page
@@ -101,84 +103,96 @@ Public Class ManageVoters
 
     End Sub
 
-    Private Sub LoadVoters()
+    Private Function GetVotersData() As DataTable
 
         Dim usernameFilter As String = txtUsernameFilter.Text.Trim()
         Dim facultyFilter As String = ddlFacultyFilter.SelectedValue
         Dim statusFilter As String = ddlStatusFilter.SelectedValue
 
-        Try
-            Using con As New SqlConnection(connectionString)
+        Dim dt As New DataTable()
 
-                Dim query As String = "
-                    SELECT 
-                        V.ADUsername,
-                        V.FacultyID,
-                        F.FacultyName,
-                        V.IsActive
-                    FROM EligibleVoters V
-                    INNER JOIN Faculties F
-                        ON V.FacultyID = F.FacultyID
-                    WHERE 1 = 1
+        Using con As New SqlConnection(connectionString)
+
+            Dim query As String = "
+                SELECT 
+                    V.ADUsername,
+                    V.FacultyID,
+                    F.FacultyName,
+                    V.IsActive,
+                    CASE 
+                        WHEN V.IsActive = 1 THEN 'Active'
+                        ELSE 'Inactive'
+                    END AS StatusText
+                FROM EligibleVoters V
+                INNER JOIN Faculties F
+                    ON V.FacultyID = F.FacultyID
+                WHERE 1 = 1
+            "
+
+            If usernameFilter <> "" Then
+                query &= "
+                    AND V.ADUsername LIKE @ADUsername
                 "
+            End If
+
+            If facultyFilter <> "" Then
+                query &= "
+                    AND V.FacultyID = @FacultyID
+                "
+            End If
+
+            If statusFilter <> "" Then
+                query &= "
+                    AND V.IsActive = @IsActive
+                "
+            End If
+
+            query &= "
+                ORDER BY V.ADUsername
+            "
+
+            Using cmd As New SqlCommand(query, con)
 
                 If usernameFilter <> "" Then
-                    query &= "
-                        AND V.ADUsername LIKE @ADUsername
-                    "
+                    cmd.Parameters.AddWithValue("@ADUsername", "%" & usernameFilter & "%")
                 End If
 
                 If facultyFilter <> "" Then
-                    query &= "
-                        AND V.FacultyID = @FacultyID
-                    "
+                    cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(facultyFilter))
                 End If
 
                 If statusFilter <> "" Then
-                    query &= "
-                        AND V.IsActive = @IsActive
-                    "
+                    cmd.Parameters.AddWithValue("@IsActive", Convert.ToBoolean(Convert.ToInt32(statusFilter)))
                 End If
 
-                query &= "
-                    ORDER BY V.ADUsername
-                "
-
-                Using cmd As New SqlCommand(query, con)
-
-                    If usernameFilter <> "" Then
-                        cmd.Parameters.AddWithValue("@ADUsername", "%" & usernameFilter & "%")
-                    End If
-
-                    If facultyFilter <> "" Then
-                        cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(facultyFilter))
-                    End If
-
-                    If statusFilter <> "" Then
-                        cmd.Parameters.AddWithValue("@IsActive", Convert.ToBoolean(Convert.ToInt32(statusFilter)))
-                    End If
-
-                    Dim dt As New DataTable()
-
-                    Using da As New SqlDataAdapter(cmd)
-                        da.Fill(dt)
-                    End Using
-
-                    gvVoters.DataSource = dt
-                    gvVoters.DataBind()
-
-                    BindFacultyDropDownsInGrid(dt)
-
-                    If dt.Rows.Count = 0 Then
-                        ShowMessage("No voters found for the selected filter.", "warning")
-                    Else
-                        pnlMessage.Visible = False
-                        lblMessage.Text = ""
-                    End If
-
+                Using da As New SqlDataAdapter(cmd)
+                    da.Fill(dt)
                 End Using
 
             End Using
+
+        End Using
+
+        Return dt
+
+    End Function
+
+    Private Sub LoadVoters()
+
+        Try
+            Dim dt As DataTable = GetVotersData()
+
+            gvVoters.DataSource = dt
+            gvVoters.DataBind()
+
+            BindFacultyDropDownsInGrid(dt)
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No voters found for the selected filter.", "warning")
+            Else
+                pnlMessage.Visible = False
+                lblMessage.Text = ""
+            End If
 
         Catch ex As Exception
             ShowMessage("Error loading voters: " & ex.Message, "error")
@@ -397,6 +411,80 @@ Public Class ManageVoters
 
         LoadFaculties()
         LoadVoters()
+
+    End Sub
+
+    Protected Sub btnExportExcel_Click(sender As Object, e As EventArgs) Handles btnExportExcel.Click
+
+        Try
+            Dim dt As DataTable = GetVotersData()
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No voters available to export for the selected filter.", "warning")
+                Return
+            End If
+
+            ExportVotersToExcel(dt)
+
+        Catch ex As Exception
+            ShowMessage("Error exporting voters: " & ex.Message, "error")
+        End Try
+
+    End Sub
+
+    Private Sub ExportVotersToExcel(dt As DataTable)
+
+        Dim fileName As String =
+            "Eligible_Voters_" & DateTime.Now.ToString("dd-MM-yyyy_HHmm") & ".xls"
+
+        Dim sb As New StringBuilder()
+
+        sb.Append("<html>")
+        sb.Append("<head>")
+        sb.Append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />")
+        sb.Append("</head>")
+        sb.Append("<body>")
+
+        sb.Append("<h2>Eligible Voters</h2>")
+        sb.Append("<p><b>Export Date:</b> " & DateTime.Now.ToString("dd-MM-yyyy HH:mm") & "</p>")
+
+        sb.Append("<p><b>Username Filter:</b> " & HttpUtility.HtmlEncode(txtUsernameFilter.Text.Trim()) & "</p>")
+        sb.Append("<p><b>Faculty Filter:</b> " & HttpUtility.HtmlEncode(ddlFacultyFilter.SelectedItem.Text) & "</p>")
+        sb.Append("<p><b>Status Filter:</b> " & HttpUtility.HtmlEncode(ddlStatusFilter.SelectedItem.Text) & "</p>")
+
+        sb.Append("<table border='1'>")
+
+        sb.Append("<tr>")
+        sb.Append("<th>Username / Student ID</th>")
+        sb.Append("<th>Faculty ID</th>")
+        sb.Append("<th>Faculty Name</th>")
+        sb.Append("<th>Status</th>")
+        sb.Append("</tr>")
+
+        For Each row As DataRow In dt.Rows
+
+            sb.Append("<tr>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("ADUsername").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("FacultyID").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("FacultyName").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("StatusText").ToString()) & "</td>")
+            sb.Append("</tr>")
+
+        Next
+
+        sb.Append("</table>")
+        sb.Append("</body>")
+        sb.Append("</html>")
+
+        Response.Clear()
+        Response.Buffer = True
+        Response.ContentType = "application/vnd.ms-excel"
+        Response.AddHeader("Content-Disposition", "attachment;filename=" & fileName)
+        Response.Charset = "utf-8"
+        Response.ContentEncoding = Encoding.UTF8
+        Response.Write(sb.ToString())
+        Response.Flush()
+        Response.End()
 
     End Sub
 
