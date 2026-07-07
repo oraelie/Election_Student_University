@@ -21,14 +21,75 @@
                 <asp:Label ID="lblUsername" runat="server" CssClass="username-label"></asp:Label>
             </div>
 
-            <asp:Label ID="lblMessage" runat="server" CssClass="message-label"></asp:Label>
+            <asp:Panel ID="pnlMessage" runat="server" CssClass="alert-box" Visible="False">
+                <asp:Label ID="lblMessage" runat="server"></asp:Label>
+            </asp:Panel>
 
-            <div class="button-area top-buttons">
-                <asp:Button 
-                    ID="btnRefresh" 
-                    runat="server" 
-                    Text="Refresh Log" 
-                    CssClass="main-button" />
+            <div class="filter-box">
+
+                <h3>Filter Audit Log</h3>
+
+                <div class="filter-row">
+
+                    <div class="filter-item">
+                        <label>Username</label>
+                        <asp:TextBox 
+                            ID="txtUsernameFilter" 
+                            runat="server" 
+                            CssClass="input-box"
+                            placeholder="Example: 202400699 or admin username">
+                        </asp:TextBox>
+                    </div>
+
+                    <div class="filter-item">
+                        <label>Action Type</label>
+                        <asp:DropDownList 
+                            ID="ddlActionType" 
+                            runat="server" 
+                            CssClass="input-box">
+                        </asp:DropDownList>
+                    </div>
+
+                </div>
+
+                <div class="filter-row">
+
+                    <div class="filter-item">
+                        <label>From Date</label>
+                        <asp:TextBox 
+                            ID="txtFromDate" 
+                            runat="server" 
+                            CssClass="input-box"
+                            placeholder="07-07-2026">
+                        </asp:TextBox>
+                    </div>
+
+                    <div class="filter-item">
+                        <label>To Date</label>
+                        <asp:TextBox 
+                            ID="txtToDate" 
+                            runat="server" 
+                            CssClass="input-box"
+                            placeholder="10-07-2026">
+                        </asp:TextBox>
+                    </div>
+
+                </div>
+
+                <div class="filter-buttons">
+                    <asp:Button 
+                        ID="btnApplyFilter" 
+                        runat="server" 
+                        Text="Apply Filter" 
+                        CssClass="main-button" />
+
+                    <asp:Button 
+                        ID="btnClearFilter" 
+                        runat="server" 
+                        Text="Clear Filter" 
+                        CssClass="clear-button" />
+                </div>
+
             </div>
 
             <asp:GridView 
@@ -40,16 +101,23 @@
                 EmptyDataText="No audit log records found.">
 
                 <Columns>
-                    <asp:BoundField DataField="LogID" HeaderText="Log ID" />
-                    <asp:BoundField DataField="ADUsername" HeaderText="Admin Username" />
+                    <asp:BoundField DataField="LogID" HeaderText="ID" />
+                    <asp:BoundField DataField="ADUsername" HeaderText="Username" />
                     <asp:BoundField DataField="ActionType" HeaderText="Action Type" />
-                    <asp:BoundField DataField="ActionDetails" HeaderText="Action Details" />
-                    <asp:BoundField DataField="ActionDateTime" HeaderText="Date / Time" />
+                    <asp:BoundField DataField="ActionDetails" HeaderText="Details" />
+                    <asp:BoundField DataField="ActionDateTimeFormatted" HeaderText="Date / Time" />
                 </Columns>
 
             </asp:GridView>
 
             <div class="button-area">
+
+                <asp:Button 
+                    ID="btnRefresh" 
+                    runat="server" 
+                    Text="Refresh" 
+                    CssClass="main-button" />
+
                 <asp:Button 
                     ID="btnBack" 
                     runat="server" 
@@ -61,6 +129,7 @@
                     runat="server" 
                     Text="Logout" 
                     CssClass="logout-button" />
+
             </div>
 
         </div>

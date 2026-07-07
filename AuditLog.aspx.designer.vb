@@ -41,6 +41,15 @@ Partial Public Class AuditLog
 	Protected WithEvents lblUsername As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
+	'''pnlMessage control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents pnlMessage As Global.System.Web.UI.WebControls.Panel
+
+	'''<summary>
 	'''lblMessage control.
 	'''</summary>
 	'''<remarks>
@@ -50,13 +59,58 @@ Partial Public Class AuditLog
 	Protected WithEvents lblMessage As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
-	'''btnRefresh control.
+	'''txtUsernameFilter control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents btnRefresh As Global.System.Web.UI.WebControls.Button
+	Protected WithEvents txtUsernameFilter As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
+	'''ddlActionType control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlActionType As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''txtFromDate control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents txtFromDate As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
+	'''txtToDate control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents txtToDate As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
+	'''btnApplyFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnApplyFilter As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''btnClearFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnClearFilter As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
 	'''gvAuditLog control.
@@ -66,6 +120,15 @@ Partial Public Class AuditLog
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents gvAuditLog As Global.System.Web.UI.WebControls.GridView
+
+	'''<summary>
+	'''btnRefresh control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnRefresh As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
 	'''btnBack control.
