@@ -86,6 +86,51 @@ Partial Public Class ManageVoters
 	Protected WithEvents btnAddVoter As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
+	'''txtUsernameFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents txtUsernameFilter As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
+	'''ddlFacultyFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlFacultyFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''ddlStatusFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlStatusFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''btnApplyFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnApplyFilter As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''btnClearFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnClearFilter As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
 	'''gvVoters control.
 	'''</summary>
 	'''<remarks>
@@ -93,6 +138,15 @@ Partial Public Class ManageVoters
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents gvVoters As Global.System.Web.UI.WebControls.GridView
+
+	'''<summary>
+	'''btnRefresh control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnRefresh As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
 	'''btnBack control.

@@ -26,14 +26,14 @@
             </asp:Panel>
 
             <div class="form-box">
-                <h3>Add New Eligible Voter</h3>
+                <h3>Add Eligible Voter</h3>
 
-                <label>AD Username</label>
+                <label>AD Username / Student ID</label>
                 <asp:TextBox 
                     ID="txtADUsername" 
                     runat="server" 
                     CssClass="input-box"
-                    placeholder="Example: elie.tawk or 202400699">
+                    placeholder="Example: 202400699">
                 </asp:TextBox>
 
                 <label>Faculty</label>
@@ -46,8 +46,65 @@
                 <asp:Button 
                     ID="btnAddVoter" 
                     runat="server" 
-                    Text="Add Eligible Voter" 
+                    Text="Add Voter" 
                     CssClass="main-button" />
+            </div>
+
+            <div class="filter-box">
+
+                <h3>Filter Voters</h3>
+
+                <div class="filter-row">
+
+                    <div class="filter-item">
+                        <label>Username / Student ID</label>
+                        <asp:TextBox 
+                            ID="txtUsernameFilter" 
+                            runat="server" 
+                            CssClass="input-box"
+                            placeholder="Search by username">
+                        </asp:TextBox>
+                    </div>
+
+                    <div class="filter-item">
+                        <label>Faculty</label>
+                        <asp:DropDownList 
+                            ID="ddlFacultyFilter" 
+                            runat="server" 
+                            CssClass="input-box">
+                        </asp:DropDownList>
+                    </div>
+
+                    <div class="filter-item">
+                        <label>Status</label>
+                        <asp:DropDownList 
+                            ID="ddlStatusFilter" 
+                            runat="server" 
+                            CssClass="input-box">
+
+                            <asp:ListItem Text="All" Value=""></asp:ListItem>
+                            <asp:ListItem Text="Active" Value="1"></asp:ListItem>
+                            <asp:ListItem Text="Inactive" Value="0"></asp:ListItem>
+
+                        </asp:DropDownList>
+                    </div>
+
+                </div>
+
+                <div class="filter-buttons">
+                    <asp:Button 
+                        ID="btnApplyFilter" 
+                        runat="server" 
+                        Text="Apply Filter" 
+                        CssClass="main-button" />
+
+                    <asp:Button 
+                        ID="btnClearFilter" 
+                        runat="server" 
+                        Text="Clear Filter" 
+                        CssClass="clear-button" />
+                </div>
+
             </div>
 
             <h3>Existing Eligible Voters</h3>
@@ -58,10 +115,12 @@
                 AutoGenerateColumns="False"
                 CssClass="data-table"
                 GridLines="None"
-                DataKeyNames="ADUsername,FacultyID">
+                DataKeyNames="ADUsername,FacultyID"
+                EmptyDataText="No voters found.">
 
                 <Columns>
-                    <asp:BoundField DataField="ADUsername" HeaderText="AD Username" ReadOnly="True" />
+
+                    <asp:BoundField DataField="ADUsername" HeaderText="Username / Student ID" ReadOnly="True" />
 
                     <asp:TemplateField HeaderText="Faculty">
                         <ItemTemplate>
@@ -93,11 +152,19 @@
                                 CommandArgument='<%# Container.DataItemIndex %>' />
                         </ItemTemplate>
                     </asp:TemplateField>
+
                 </Columns>
 
             </asp:GridView>
 
             <div class="button-area">
+
+                <asp:Button 
+                    ID="btnRefresh" 
+                    runat="server" 
+                    Text="Refresh" 
+                    CssClass="main-button" />
+
                 <asp:Button 
                     ID="btnBack" 
                     runat="server" 
@@ -109,6 +176,7 @@
                     runat="server" 
                     Text="Logout" 
                     CssClass="logout-button" />
+
             </div>
 
         </div>

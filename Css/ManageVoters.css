@@ -6,7 +6,7 @@
 }
 
 .page-container {
-	width: 1050px;
+	width: 1200px;
 	margin: 50px auto;
 	padding: 30px;
 	background-color: white;
@@ -25,7 +25,8 @@
 
 	.page-container h3 {
 		color: #1f2937;
-		margin-top: 25px;
+		margin-top: 0;
+		margin-bottom: 18px;
 	}
 
 .user-box {
@@ -78,7 +79,9 @@
 	border-left-color: #dc2626;
 }
 
-.form-box {
+/* Add and filter boxes */
+.form-box,
+.filter-box {
 	background-color: #f9fafb;
 	border: 1px solid #e5e7eb;
 	padding: 20px;
@@ -86,13 +89,24 @@
 	margin-bottom: 25px;
 }
 
-	.form-box label {
+	.form-box label,
+	.filter-item label {
 		display: block;
 		margin-top: 12px;
 		margin-bottom: 6px;
 		font-weight: bold;
 		color: #1f2937;
 	}
+
+.filter-row {
+	display: flex;
+	gap: 18px;
+	margin-bottom: 15px;
+}
+
+.filter-item {
+	flex: 1;
+}
 
 .input-box {
 	width: 100%;
@@ -110,6 +124,11 @@
 		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.15);
 	}
 
+.filter-buttons {
+	margin-top: 12px;
+}
+
+/* Table */
 .data-table {
 	width: 100%;
 	border-collapse: collapse;
@@ -121,10 +140,11 @@
 		color: white;
 		padding: 11px;
 		text-align: left;
+		white-space: nowrap;
 	}
 
 	.data-table td {
-		padding: 11px;
+		padding: 10px;
 		border-bottom: 1px solid #e5e7eb;
 		vertical-align: middle;
 	}
@@ -134,7 +154,7 @@
 	}
 
 .grid-dropdown {
-	width: 100%;
+	width: 260px;
 	padding: 8px;
 	border: 1px solid #cbd5e1;
 	border-radius: 5px;
@@ -150,8 +170,13 @@
 		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.12);
 	}
 
+/* Buttons */
+.button-area {
+	text-align: center;
+	margin-top: 25px;
+}
+
 .main-button {
-	margin-top: 15px;
 	padding: 11px 20px;
 	background-color: #1f2937;
 	color: white;
@@ -159,10 +184,26 @@
 	cursor: pointer;
 	border-radius: 5px;
 	font-weight: bold;
+	margin-right: 8px;
+	margin-top: 15px;
 }
 
 	.main-button:hover {
 		background-color: #374151;
+	}
+
+.clear-button {
+	padding: 11px 20px;
+	background-color: #6b7280;
+	color: white;
+	border: none;
+	cursor: pointer;
+	border-radius: 5px;
+	font-weight: bold;
+}
+
+	.clear-button:hover {
+		background-color: #4b5563;
 	}
 
 .small-button {
@@ -179,18 +220,13 @@
 		background-color: #374151;
 	}
 
-.button-area {
-	text-align: center;
-	margin-top: 25px;
-}
-
 .back-button {
 	padding: 11px 20px;
 	background-color: #4b5563;
 	color: white;
 	border: none;
 	cursor: pointer;
-	margin-right: 10px;
+	margin-right: 8px;
 	border-radius: 5px;
 	font-weight: bold;
 }
@@ -213,19 +249,29 @@
 		background-color: #dc2626;
 	}
 
-@media screen and (max-width: 900px) {
+/* Responsive */
+@media screen and (max-width: 950px) {
 	.page-container {
-		width: 92%;
+		width: 95%;
 		margin: 25px auto;
 		padding: 22px;
+		overflow-x: auto;
 	}
 
-	.button-area {
+	.filter-row {
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.button-area,
+	.filter-buttons {
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
 	}
 
+	.main-button,
+	.clear-button,
 	.back-button,
 	.logout-button {
 		width: 100%;

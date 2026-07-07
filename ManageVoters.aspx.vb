@@ -57,7 +57,9 @@ Public Class ManageVoters
             Using con As New SqlConnection(connectionString)
 
                 Dim query As String = "
-                    SELECT FacultyID, FacultyName
+                    SELECT 
+                        FacultyID,
+                        FacultyName
                     FROM Faculties
                     WHERE IsActive = 1
                     ORDER BY FacultyName
@@ -73,10 +75,21 @@ Public Class ManageVoters
 
                     FacultiesTable = dt
 
-                    ddlFaculty.DataSource = dt
-                    ddlFaculty.DataTextField = "FacultyName"
-                    ddlFaculty.DataValueField = "FacultyID"
-                    ddlFaculty.DataBind()
+                    ddlFaculty.Items.Clear()
+                    ddlFacultyFilter.Items.Clear()
+
+                    ddlFaculty.Items.Add(New ListItem("Select Faculty", ""))
+                    ddlFacultyFilter.Items.Add(New ListItem("All Faculties", ""))
+
+                    For Each row As DataRow In dt.Rows
+
+                        Dim facultyID As String = row("FacultyID").ToString()
+                        Dim facultyName As String = row("FacultyName").ToString()
+
+                        ddlFaculty.Items.Add(New ListItem(facultyName, facultyID))
+                        ddlFacultyFilter.Items.Add(New ListItem(facultyName, facultyID))
+
+                    Next
 
                 End Using
 
@@ -90,6 +103,10 @@ Public Class ManageVoters
 
     Private Sub LoadVoters()
 
+        Dim usernameFilter As String = txtUsernameFilter.Text.Trim()
+        Dim facultyFilter As String = ddlFacultyFilter.SelectedValue
+        Dim statusFilter As String = ddlStatusFilter.SelectedValue
+
         Try
             Using con As New SqlConnection(connectionString)
 
@@ -102,10 +119,44 @@ Public Class ManageVoters
                     FROM EligibleVoters V
                     INNER JOIN Faculties F
                         ON V.FacultyID = F.FacultyID
+                    WHERE 1 = 1
+                "
+
+                If usernameFilter <> "" Then
+                    query &= "
+                        AND V.ADUsername LIKE @ADUsername
+                    "
+                End If
+
+                If facultyFilter <> "" Then
+                    query &= "
+                        AND V.FacultyID = @FacultyID
+                    "
+                End If
+
+                If statusFilter <> "" Then
+                    query &= "
+                        AND V.IsActive = @IsActive
+                    "
+                End If
+
+                query &= "
                     ORDER BY V.ADUsername
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
+                    If usernameFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@ADUsername", "%" & usernameFilter & "%")
+                    End If
+
+                    If facultyFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(facultyFilter))
+                    End If
+
+                    If statusFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@IsActive", Convert.ToBoolean(Convert.ToInt32(statusFilter)))
+                    End If
 
                     Dim dt As New DataTable()
 
@@ -116,7 +167,14 @@ Public Class ManageVoters
                     gvVoters.DataSource = dt
                     gvVoters.DataBind()
 
-                    BindFacultyDropdownsInGrid(dt)
+                    BindFacultyDropDownsInGrid(dt)
+
+                    If dt.Rows.Count = 0 Then
+                        ShowMessage("No voters found for the selected filter.", "warning")
+                    Else
+                        pnlMessage.Visible = False
+                        lblMessage.Text = ""
+                    End If
 
                 End Using
 
@@ -128,7 +186,7 @@ Public Class ManageVoters
 
     End Sub
 
-    Private Sub BindFacultyDropdownsInGrid(votersTable As DataTable)
+    Private Sub BindFacultyDropDownsInGrid(votersTable As DataTable)
 
         If FacultiesTable Is Nothing Then
             Return
@@ -141,16 +199,24 @@ Public Class ManageVoters
 
             If ddl IsNot Nothing Then
 
-                ddl.DataSource = FacultiesTable
-                ddl.DataTextField = "FacultyName"
-                ddl.DataValueField = "FacultyID"
-                ddl.DataBind()
+                ddl.Items.Clear()
 
-                Dim currentFacultyID As String =
+                For Each facultyRow As DataRow In FacultiesTable.Rows
+
+                    ddl.Items.Add(
+                        New ListItem(
+                            facultyRow("FacultyName").ToString(),
+                            facultyRow("FacultyID").ToString()
+                        )
+                    )
+
+                Next
+
+                Dim selectedFacultyID As String =
                     votersTable.Rows(row.RowIndex)("FacultyID").ToString()
 
-                If ddl.Items.FindByValue(currentFacultyID) IsNot Nothing Then
-                    ddl.SelectedValue = currentFacultyID
+                If ddl.Items.FindByValue(selectedFacultyID) IsNot Nothing Then
+                    ddl.SelectedValue = selectedFacultyID
                 End If
 
             End If
@@ -161,10 +227,10 @@ Public Class ManageVoters
 
     Protected Sub btnAddVoter_Click(sender As Object, e As EventArgs) Handles btnAddVoter.Click
 
-        Dim voterUsername As String = txtADUsername.Text.Trim()
+        Dim adUsername As String = txtADUsername.Text.Trim()
 
-        If voterUsername = "" Then
-            ShowMessage("Please enter the AD username.", "warning")
+        If adUsername = "" Then
+            ShowMessage("Please enter the AD username or student ID.", "warning")
             Return
         End If
 
@@ -173,10 +239,10 @@ Public Class ManageVoters
             Return
         End If
 
+        Dim facultyID As Integer = Convert.ToInt32(ddlFaculty.SelectedValue)
+
         Try
             Using con As New SqlConnection(connectionString)
-
-                con.Open()
 
                 Dim checkQuery As String = "
                     SELECT COUNT(*)
@@ -186,13 +252,14 @@ Public Class ManageVoters
 
                 Using checkCmd As New SqlCommand(checkQuery, con)
 
-                    checkCmd.Parameters.AddWithValue("@ADUsername", voterUsername)
+                    checkCmd.Parameters.AddWithValue("@ADUsername", adUsername)
 
-                    Dim exists As Integer =
-                        Convert.ToInt32(checkCmd.ExecuteScalar())
+                    con.Open()
 
-                    If exists > 0 Then
-                        ShowMessage("This voter already exists. You can update the voter faculty or active status from the table.", "warning")
+                    Dim count As Integer = Convert.ToInt32(checkCmd.ExecuteScalar())
+
+                    If count > 0 Then
+                        ShowMessage("This voter already exists.", "warning")
                         Return
                     End If
 
@@ -203,12 +270,12 @@ Public Class ManageVoters
                     VALUES (@ADUsername, @FacultyID, 1)
                 "
 
-                Using cmd As New SqlCommand(insertQuery, con)
+                Using insertCmd As New SqlCommand(insertQuery, con)
 
-                    cmd.Parameters.AddWithValue("@ADUsername", voterUsername)
-                    cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(ddlFaculty.SelectedValue))
+                    insertCmd.Parameters.AddWithValue("@ADUsername", adUsername)
+                    insertCmd.Parameters.AddWithValue("@FacultyID", facultyID)
 
-                    cmd.ExecuteNonQuery()
+                    insertCmd.ExecuteNonQuery()
 
                 End Using
 
@@ -216,15 +283,16 @@ Public Class ManageVoters
 
             AddAuditLog(
                 "Add Voter",
-                "Added eligible voter: " & voterUsername &
-                ", FacultyID: " & ddlFaculty.SelectedValue
+                "Added voter: " & adUsername &
+                ", FacultyID: " & facultyID.ToString()
             )
 
             txtADUsername.Text = ""
+            ddlFaculty.SelectedIndex = 0
 
             LoadVoters()
 
-            ShowMessage("Eligible voter added successfully.", "success")
+            ShowMessage("Voter added successfully.", "success")
 
         Catch ex As Exception
             ShowMessage("Error adding voter: " & ex.Message, "error")
@@ -239,7 +307,7 @@ Public Class ManageVoters
             Dim rowIndex As Integer =
                 Convert.ToInt32(e.CommandArgument)
 
-            Dim voterUsername As String =
+            Dim adUsername As String =
                 gvVoters.DataKeys(rowIndex).Values("ADUsername").ToString()
 
             Dim oldFacultyID As String =
@@ -247,26 +315,19 @@ Public Class ManageVoters
 
             Dim row As GridViewRow = gvVoters.Rows(rowIndex)
 
-            Dim ddl As DropDownList =
+            Dim ddlGridFaculty As DropDownList =
                 TryCast(row.FindControl("ddlGridFaculty"), DropDownList)
 
-            Dim chk As CheckBox =
+            Dim chkIsActive As CheckBox =
                 TryCast(row.FindControl("chkIsActive"), CheckBox)
 
-            If ddl Is Nothing Then
-                ShowMessage("Faculty dropdown not found.", "error")
+            If ddlGridFaculty Is Nothing OrElse chkIsActive Is Nothing Then
+                ShowMessage("One or more voter controls were not found.", "error")
                 Return
             End If
 
-            If chk Is Nothing Then
-                ShowMessage("Active checkbox not found.", "error")
-                Return
-            End If
-
-            Dim newFacultyID As Integer =
-                Convert.ToInt32(ddl.SelectedValue)
-
-            Dim isActive As Boolean = chk.Checked
+            Dim newFacultyID As Integer = Convert.ToInt32(ddlGridFaculty.SelectedValue)
+            Dim isActive As Boolean = chkIsActive.Checked
 
             Try
                 Using con As New SqlConnection(connectionString)
@@ -283,7 +344,7 @@ Public Class ManageVoters
 
                         cmd.Parameters.AddWithValue("@FacultyID", newFacultyID)
                         cmd.Parameters.AddWithValue("@IsActive", isActive)
-                        cmd.Parameters.AddWithValue("@ADUsername", voterUsername)
+                        cmd.Parameters.AddWithValue("@ADUsername", adUsername)
 
                         con.Open()
                         cmd.ExecuteNonQuery()
@@ -294,10 +355,10 @@ Public Class ManageVoters
 
                 AddAuditLog(
                     "Update Voter",
-                    "Updated voter: " & voterUsername &
+                    "Updated voter: " & adUsername &
                     ", Old FacultyID: " & oldFacultyID &
                     ", New FacultyID: " & newFacultyID.ToString() &
-                    ", Active = " & isActive.ToString()
+                    ", Active: " & isActive.ToString()
                 )
 
                 LoadVoters()
@@ -309,6 +370,33 @@ Public Class ManageVoters
             End Try
 
         End If
+
+    End Sub
+
+    Protected Sub btnApplyFilter_Click(sender As Object, e As EventArgs) Handles btnApplyFilter.Click
+
+        LoadVoters()
+
+    End Sub
+
+    Protected Sub btnClearFilter_Click(sender As Object, e As EventArgs) Handles btnClearFilter.Click
+
+        txtUsernameFilter.Text = ""
+
+        If ddlFacultyFilter.Items.Count > 0 Then
+            ddlFacultyFilter.SelectedIndex = 0
+        End If
+
+        ddlStatusFilter.SelectedValue = ""
+
+        LoadVoters()
+
+    End Sub
+
+    Protected Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
+
+        LoadFaculties()
+        LoadVoters()
 
     End Sub
 
