@@ -1,6 +1,8 @@
 ﻿Imports System.Data
 Imports System.Data.SqlClient
 Imports System.Configuration
+Imports System.Text
+Imports System.Web
 
 Public Class ManagePositions
     Inherits System.Web.UI.Page
@@ -151,108 +153,120 @@ Public Class ManagePositions
 
     End Sub
 
-    Private Sub LoadPositions()
+    Private Function GetPositionsData() As DataTable
 
         Dim electionFilter As String = ddlElectionFilter.SelectedValue
         Dim positionTitleFilter As String = txtPositionTitleFilter.Text.Trim()
         Dim facultyFilter As String = ddlFacultyFilter.SelectedValue
         Dim statusFilter As String = ddlStatusFilter.SelectedValue
 
-        Try
-            Using con As New SqlConnection(connectionString)
+        Dim dt As New DataTable()
 
-                Dim query As String = "
-                    SELECT 
-                        P.PositionID,
-                        P.PositionTitle,
-                        P.ElectionID,
-                        E.ElectionTitle,
-                        P.FacultyID,
-                        ISNULL(F.FacultyName, 'General Position') AS FacultyName,
-                        P.IsActive
-                    FROM Positions P
-                    INNER JOIN Elections E
-                        ON P.ElectionID = E.ElectionID
-                    LEFT JOIN Faculties F
-                        ON P.FacultyID = F.FacultyID
-                    WHERE 1 = 1
+        Using con As New SqlConnection(connectionString)
+
+            Dim query As String = "
+                SELECT 
+                    P.PositionID,
+                    P.PositionTitle,
+                    P.ElectionID,
+                    E.ElectionTitle,
+                    P.FacultyID,
+                    ISNULL(F.FacultyName, 'General Position') AS FacultyName,
+                    P.IsActive,
+                    CASE 
+                        WHEN P.IsActive = 1 THEN 'Active'
+                        ELSE 'Inactive'
+                    END AS StatusText
+                FROM Positions P
+                INNER JOIN Elections E
+                    ON P.ElectionID = E.ElectionID
+                LEFT JOIN Faculties F
+                    ON P.FacultyID = F.FacultyID
+                WHERE 1 = 1
+            "
+
+            If electionFilter <> "" Then
+                query &= "
+                    AND P.ElectionID = @ElectionID
                 "
+            End If
+
+            If positionTitleFilter <> "" Then
+                query &= "
+                    AND P.PositionTitle LIKE @PositionTitle
+                "
+            End If
+
+            If facultyFilter <> "" Then
+
+                If facultyFilter = "GENERAL" Then
+                    query &= "
+                        AND P.FacultyID IS NULL
+                    "
+                Else
+                    query &= "
+                        AND P.FacultyID = @FacultyID
+                    "
+                End If
+
+            End If
+
+            If statusFilter <> "" Then
+                query &= "
+                    AND P.IsActive = @IsActive
+                "
+            End If
+
+            query &= "
+                ORDER BY E.ElectionID DESC, P.PositionTitle
+            "
+
+            Using cmd As New SqlCommand(query, con)
 
                 If electionFilter <> "" Then
-                    query &= "
-                        AND P.ElectionID = @ElectionID
-                    "
+                    cmd.Parameters.AddWithValue("@ElectionID", Convert.ToInt32(electionFilter))
                 End If
 
                 If positionTitleFilter <> "" Then
-                    query &= "
-                        AND P.PositionTitle LIKE @PositionTitle
-                    "
+                    cmd.Parameters.AddWithValue("@PositionTitle", "%" & positionTitleFilter & "%")
                 End If
 
-                If facultyFilter <> "" Then
-
-                    If facultyFilter = "GENERAL" Then
-                        query &= "
-                            AND P.FacultyID IS NULL
-                        "
-                    Else
-                        query &= "
-                            AND P.FacultyID = @FacultyID
-                        "
-                    End If
-
+                If facultyFilter <> "" AndAlso facultyFilter <> "GENERAL" Then
+                    cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(facultyFilter))
                 End If
 
                 If statusFilter <> "" Then
-                    query &= "
-                        AND P.IsActive = @IsActive
-                    "
+                    cmd.Parameters.AddWithValue("@IsActive", Convert.ToBoolean(Convert.ToInt32(statusFilter)))
                 End If
 
-                query &= "
-                    ORDER BY E.ElectionID DESC, P.PositionTitle
-                "
-
-                Using cmd As New SqlCommand(query, con)
-
-                    If electionFilter <> "" Then
-                        cmd.Parameters.AddWithValue("@ElectionID", Convert.ToInt32(electionFilter))
-                    End If
-
-                    If positionTitleFilter <> "" Then
-                        cmd.Parameters.AddWithValue("@PositionTitle", "%" & positionTitleFilter & "%")
-                    End If
-
-                    If facultyFilter <> "" AndAlso facultyFilter <> "GENERAL" Then
-                        cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(facultyFilter))
-                    End If
-
-                    If statusFilter <> "" Then
-                        cmd.Parameters.AddWithValue("@IsActive", Convert.ToBoolean(Convert.ToInt32(statusFilter)))
-                    End If
-
-                    Dim dt As New DataTable()
-
-                    Using da As New SqlDataAdapter(cmd)
-                        da.Fill(dt)
-                    End Using
-
-                    gvPositions.DataSource = dt
-                    gvPositions.DataBind()
-
-                    BindFacultyDropDownsInGrid(dt)
-
-                    If dt.Rows.Count = 0 Then
-                        ShowMessage("No positions found for the selected filter.", "warning")
-                    Else
-                        pnlMessage.Visible = False
-                        lblMessage.Text = ""
-                    End If
-
+                Using da As New SqlDataAdapter(cmd)
+                    da.Fill(dt)
                 End Using
 
             End Using
+
+        End Using
+
+        Return dt
+
+    End Function
+
+    Private Sub LoadPositions()
+
+        Try
+            Dim dt As DataTable = GetPositionsData()
+
+            gvPositions.DataSource = dt
+            gvPositions.DataBind()
+
+            BindFacultyDropDownsInGrid(dt)
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No positions found for the selected filter.", "warning")
+            Else
+                pnlMessage.Visible = False
+                lblMessage.Text = ""
+            End If
 
         Catch ex As Exception
             ShowMessage("Error loading positions: " & ex.Message, "error")
@@ -499,6 +513,95 @@ Public Class ManagePositions
         LoadElections()
         LoadFaculties()
         LoadPositions()
+
+    End Sub
+
+    Protected Sub btnExportExcel_Click(sender As Object, e As EventArgs) Handles btnExportExcel.Click
+
+        Try
+            Dim dt As DataTable = GetPositionsData()
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No positions available to export for the selected filter.", "warning")
+                Return
+            End If
+
+            ExportPositionsToExcel(dt)
+
+        Catch ex As Exception
+            ShowMessage("Error exporting positions: " & ex.Message, "error")
+        End Try
+
+    End Sub
+
+    Private Sub ExportPositionsToExcel(dt As DataTable)
+
+        Dim fileName As String =
+            "Positions_" & DateTime.Now.ToString("dd-MM-yyyy_HHmm") & ".xls"
+
+        Dim sb As New StringBuilder()
+
+        sb.Append("<html>")
+        sb.Append("<head>")
+        sb.Append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />")
+        sb.Append("</head>")
+        sb.Append("<body>")
+
+        sb.Append("<h2>Positions List</h2>")
+        sb.Append("<p><b>Export Date:</b> " & DateTime.Now.ToString("dd-MM-yyyy HH:mm") & "</p>")
+
+        sb.Append("<p><b>Election Filter:</b> " & HttpUtility.HtmlEncode(ddlElectionFilter.SelectedItem.Text) & "</p>")
+        sb.Append("<p><b>Position Title Filter:</b> " & HttpUtility.HtmlEncode(txtPositionTitleFilter.Text.Trim()) & "</p>")
+        sb.Append("<p><b>Faculty Filter:</b> " & HttpUtility.HtmlEncode(ddlFacultyFilter.SelectedItem.Text) & "</p>")
+        sb.Append("<p><b>Status Filter:</b> " & HttpUtility.HtmlEncode(ddlStatusFilter.SelectedItem.Text) & "</p>")
+
+        sb.Append("<table border='1'>")
+
+        sb.Append("<tr>")
+        sb.Append("<th>Position ID</th>")
+        sb.Append("<th>Election ID</th>")
+        sb.Append("<th>Election</th>")
+        sb.Append("<th>Position Title</th>")
+        sb.Append("<th>Faculty ID</th>")
+        sb.Append("<th>Faculty Name</th>")
+        sb.Append("<th>Status</th>")
+        sb.Append("</tr>")
+
+        For Each row As DataRow In dt.Rows
+
+            Dim facultyIDText As String = ""
+
+            If Not IsDBNull(row("FacultyID")) Then
+                facultyIDText = row("FacultyID").ToString()
+            Else
+                facultyIDText = "General"
+            End If
+
+            sb.Append("<tr>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("PositionID").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("ElectionID").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("ElectionTitle").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("PositionTitle").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(facultyIDText) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("FacultyName").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("StatusText").ToString()) & "</td>")
+            sb.Append("</tr>")
+
+        Next
+
+        sb.Append("</table>")
+        sb.Append("</body>")
+        sb.Append("</html>")
+
+        Response.Clear()
+        Response.Buffer = True
+        Response.ContentType = "application/vnd.ms-excel"
+        Response.AddHeader("Content-Disposition", "attachment;filename=" & fileName)
+        Response.Charset = "utf-8"
+        Response.ContentEncoding = Encoding.UTF8
+        Response.Write(sb.ToString())
+        Response.Flush()
+        Response.End()
 
     End Sub
 
