@@ -8,6 +8,15 @@ Public Class ManagePositions
     Private ReadOnly connectionString As String =
         ConfigurationManager.ConnectionStrings("ElectionConnection").ConnectionString
 
+    Private Property FacultiesTable As DataTable
+        Get
+            Return TryCast(ViewState("FacultiesTable"), DataTable)
+        End Get
+        Set(value As DataTable)
+            ViewState("FacultiesTable") = value
+        End Set
+    End Property
+
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As EventArgs) Handles Me.Load
 
         If Session("ADUsername") Is Nothing OrElse Session("UserRole") Is Nothing Then
@@ -35,6 +44,7 @@ Public Class ManagePositions
         lblUsername.Text = "Username: " & adUsername
 
         If Not IsPostBack Then
+            pnlMessage.Visible = False
             LoadElections()
             LoadFaculties()
             LoadPositions()
@@ -71,7 +81,7 @@ Public Class ManagePositions
             End Using
 
         Catch ex As Exception
-            lblMessage.Text = "Error loading elections: " & ex.Message
+            ShowMessage("Error loading elections: " & ex.Message, "error")
         End Try
 
     End Sub
@@ -96,6 +106,8 @@ Public Class ManagePositions
                         da.Fill(dt)
                     End Using
 
+                    FacultiesTable = dt
+
                     ddlFaculty.Items.Clear()
                     ddlFaculty.Items.Add(New ListItem("General Position", ""))
 
@@ -113,7 +125,7 @@ Public Class ManagePositions
             End Using
 
         Catch ex As Exception
-            lblMessage.Text = "Error loading faculties: " & ex.Message
+            ShowMessage("Error loading faculties: " & ex.Message, "error")
         End Try
 
     End Sub
@@ -128,6 +140,7 @@ Public Class ManagePositions
                         P.PositionID,
                         E.ElectionTitle,
                         P.PositionTitle,
+                        P.FacultyID,
                         ISNULL(F.FacultyName, 'General Position') AS FacultyName,
                         P.IsActive
                     FROM Positions P
@@ -149,27 +162,71 @@ Public Class ManagePositions
                     gvPositions.DataSource = dt
                     gvPositions.DataBind()
 
+                    BindFacultyDropdownsInGrid(dt)
+
                 End Using
 
             End Using
 
         Catch ex As Exception
-            lblMessage.Text = "Error loading positions: " & ex.Message
+            ShowMessage("Error loading positions: " & ex.Message, "error")
         End Try
+
+    End Sub
+
+    Private Sub BindFacultyDropdownsInGrid(positionsTable As DataTable)
+
+        For Each row As GridViewRow In gvPositions.Rows
+
+            Dim ddl As DropDownList =
+                TryCast(row.FindControl("ddlGridFaculty"), DropDownList)
+
+            If ddl IsNot Nothing Then
+
+                ddl.Items.Clear()
+                ddl.Items.Add(New ListItem("General Position", ""))
+
+                If FacultiesTable IsNot Nothing Then
+                    For Each facultyRow As DataRow In FacultiesTable.Rows
+                        ddl.Items.Add(
+                            New ListItem(
+                                facultyRow("FacultyName").ToString(),
+                                facultyRow("FacultyID").ToString()
+                            )
+                        )
+                    Next
+                End If
+
+                Dim currentFacultyValue As Object =
+                    positionsTable.Rows(row.RowIndex)("FacultyID")
+
+                If currentFacultyValue Is DBNull.Value Then
+                    ddl.SelectedValue = ""
+                Else
+                    Dim currentFacultyID As String = currentFacultyValue.ToString()
+
+                    If ddl.Items.FindByValue(currentFacultyID) IsNot Nothing Then
+                        ddl.SelectedValue = currentFacultyID
+                    End If
+                End If
+
+            End If
+
+        Next
 
     End Sub
 
     Protected Sub btnAddPosition_Click(sender As Object, e As EventArgs) Handles btnAddPosition.Click
 
         If ddlElection.SelectedValue = "" Then
-            lblMessage.Text = "Please select an election."
+            ShowMessage("Please select an election.", "warning")
             Return
         End If
 
         Dim positionTitle As String = txtPositionTitle.Text.Trim()
 
         If positionTitle = "" Then
-            lblMessage.Text = "Please enter the position title."
+            ShowMessage("Please enter the position title.", "warning")
             Return
         End If
 
@@ -216,31 +273,77 @@ Public Class ManagePositions
                 ", FacultyID: " & facultyIDText
             )
 
-            lblMessage.Text = "Position added successfully."
             txtPositionTitle.Text = ""
             ddlFaculty.SelectedIndex = 0
 
             LoadPositions()
 
+            ShowMessage("Position added successfully.", "success")
+
         Catch ex As Exception
-            lblMessage.Text = "Error adding position: " & ex.Message
+            ShowMessage("Error adding position: " & ex.Message, "error")
         End Try
 
     End Sub
 
     Protected Sub gvPositions_RowCommand(sender As Object, e As GridViewCommandEventArgs) Handles gvPositions.RowCommand
 
-        If e.CommandName = "UpdateActive" Then
+        If e.CommandName = "UpdatePosition" Then
 
-            Dim rowIndex As Integer = Convert.ToInt32(e.CommandArgument)
-            Dim positionID As Integer = Convert.ToInt32(gvPositions.DataKeys(rowIndex).Value)
+            Dim rowIndex As Integer =
+                Convert.ToInt32(e.CommandArgument)
+
+            Dim positionID As Integer =
+                Convert.ToInt32(gvPositions.DataKeys(rowIndex).Values("PositionID"))
+
+            Dim oldFacultyID As String = ""
+
+            If gvPositions.DataKeys(rowIndex).Values("FacultyID") IsNot Nothing Then
+                oldFacultyID = gvPositions.DataKeys(rowIndex).Values("FacultyID").ToString()
+            End If
+
+            If oldFacultyID = "" Then
+                oldFacultyID = "NULL"
+            End If
 
             Dim row As GridViewRow = gvPositions.Rows(rowIndex)
-            Dim chk As CheckBox = TryCast(row.FindControl("chkIsActive"), CheckBox)
+
+            Dim txtTitle As TextBox =
+                TryCast(row.FindControl("txtGridPositionTitle"), TextBox)
+
+            Dim ddlFaculty As DropDownList =
+                TryCast(row.FindControl("ddlGridFaculty"), DropDownList)
+
+            Dim chk As CheckBox =
+                TryCast(row.FindControl("chkIsActive"), CheckBox)
+
+            If txtTitle Is Nothing Then
+                ShowMessage("Position title textbox not found.", "error")
+                Return
+            End If
+
+            If ddlFaculty Is Nothing Then
+                ShowMessage("Faculty dropdown not found.", "error")
+                Return
+            End If
 
             If chk Is Nothing Then
-                lblMessage.Text = "Active checkbox not found."
+                ShowMessage("Active checkbox not found.", "error")
                 Return
+            End If
+
+            Dim positionTitle As String = txtTitle.Text.Trim()
+
+            If positionTitle = "" Then
+                ShowMessage("Position title cannot be empty.", "warning")
+                Return
+            End If
+
+            Dim newFacultyIDText As String = "NULL"
+            Dim isActive As Boolean = chk.Checked
+
+            If ddlFaculty.SelectedValue <> "" Then
+                newFacultyIDText = ddlFaculty.SelectedValue
             End If
 
             Try
@@ -248,13 +351,24 @@ Public Class ManagePositions
 
                     Dim query As String = "
                         UPDATE Positions
-                        SET IsActive = @IsActive
+                        SET 
+                            PositionTitle = @PositionTitle,
+                            FacultyID = @FacultyID,
+                            IsActive = @IsActive
                         WHERE PositionID = @PositionID
                     "
 
                     Using cmd As New SqlCommand(query, con)
 
-                        cmd.Parameters.AddWithValue("@IsActive", chk.Checked)
+                        cmd.Parameters.AddWithValue("@PositionTitle", positionTitle)
+
+                        If ddlFaculty.SelectedValue = "" Then
+                            cmd.Parameters.AddWithValue("@FacultyID", DBNull.Value)
+                        Else
+                            cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(ddlFaculty.SelectedValue))
+                        End If
+
+                        cmd.Parameters.AddWithValue("@IsActive", isActive)
                         cmd.Parameters.AddWithValue("@PositionID", positionID)
 
                         con.Open()
@@ -267,14 +381,18 @@ Public Class ManagePositions
                 AddAuditLog(
                     "Update Position",
                     "Updated PositionID: " & positionID.ToString() &
-                    ", Active = " & chk.Checked.ToString()
+                    ", Title: " & positionTitle &
+                    ", Old FacultyID: " & oldFacultyID &
+                    ", New FacultyID: " & newFacultyIDText &
+                    ", Active = " & isActive.ToString()
                 )
 
-                lblMessage.Text = "Position updated successfully."
                 LoadPositions()
 
+                ShowMessage("Position updated successfully.", "success")
+
             Catch ex As Exception
-                lblMessage.Text = "Error updating position: " & ex.Message
+                ShowMessage("Error updating position: " & ex.Message, "error")
             End Try
 
         End If
@@ -316,14 +434,33 @@ Public Class ManagePositions
 
     End Sub
 
+    Private Sub ShowMessage(message As String, messageType As String)
+
+        lblMessage.Text = message
+        pnlMessage.Visible = True
+
+        If messageType = "success" Then
+            pnlMessage.CssClass = "alert-box alert-success"
+        ElseIf messageType = "warning" Then
+            pnlMessage.CssClass = "alert-box alert-warning"
+        Else
+            pnlMessage.CssClass = "alert-box alert-error"
+        End If
+
+    End Sub
+
     Protected Sub btnBack_Click(sender As Object, e As EventArgs) Handles btnBack.Click
+
         Response.Redirect("AdminDashboard.aspx")
+
     End Sub
 
     Protected Sub btnLogout_Click(sender As Object, e As EventArgs) Handles btnLogout.Click
+
         Session.Clear()
         Session.Abandon()
         Response.Redirect("Login.aspx")
+
     End Sub
 
 End Class

@@ -6,18 +6,21 @@
 }
 
 .page-container {
-	width: 1100px;
+	width: 1150px;
 	margin: 50px auto;
 	padding: 30px;
 	background-color: white;
 	border: 1px solid #ddd;
-	border-radius: 8px;
+	border-radius: 10px;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 	.page-container h2 {
 		text-align: center;
 		color: #1f2937;
+		margin-top: 0;
 		margin-bottom: 25px;
+		font-size: 28px;
 	}
 
 	.page-container h3 {
@@ -27,9 +30,9 @@
 
 .user-box {
 	background-color: #f9fafb;
-	padding: 15px;
+	padding: 16px;
 	border: 1px solid #e5e7eb;
-	border-radius: 6px;
+	border-radius: 8px;
 	margin-bottom: 20px;
 }
 
@@ -44,19 +47,42 @@
 	color: #6b7280;
 }
 
-.message-label {
-	display: block;
-	color: #b91c1c;
+/* Alert message */
+.alert-box {
+	padding: 15px 18px;
+	border-radius: 8px;
+	margin: 18px 0;
+	font-size: 15px;
 	font-weight: bold;
-	margin-bottom: 15px;
-	text-align: center;
+	text-align: left;
+	border-left: 6px solid;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+	line-height: 1.5;
+}
+
+.alert-success {
+	background-color: #ecfdf5;
+	color: #065f46;
+	border-left-color: #10b981;
+}
+
+.alert-warning {
+	background-color: #fffbeb;
+	color: #92400e;
+	border-left-color: #f59e0b;
+}
+
+.alert-error {
+	background-color: #fef2f2;
+	color: #991b1b;
+	border-left-color: #dc2626;
 }
 
 .form-box {
 	background-color: #f9fafb;
 	border: 1px solid #e5e7eb;
 	padding: 20px;
-	border-radius: 6px;
+	border-radius: 8px;
 	margin-bottom: 25px;
 }
 
@@ -70,10 +96,19 @@
 
 .input-box {
 	width: 100%;
-	padding: 9px;
+	padding: 11px;
 	box-sizing: border-box;
-	border: 1px solid #ccc;
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+	font-size: 15px;
+	background-color: white;
 }
+
+	.input-box:focus {
+		outline: none;
+		border-color: #1f2937;
+		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.15);
+	}
 
 .hint {
 	font-size: 13px;
@@ -90,26 +125,57 @@
 	.data-table th {
 		background-color: #1f2937;
 		color: white;
-		padding: 10px;
+		padding: 11px;
 		text-align: left;
+		white-space: nowrap;
 	}
 
 	.data-table td {
 		padding: 10px;
 		border-bottom: 1px solid #e5e7eb;
+		vertical-align: middle;
 	}
 
 	.data-table tr:nth-child(even) {
 		background-color: #f9fafb;
 	}
 
+.grid-input {
+	width: 230px;
+	padding: 8px;
+	border: 1px solid #cbd5e1;
+	border-radius: 5px;
+	font-size: 14px;
+	box-sizing: border-box;
+}
+
+.grid-dropdown {
+	width: 230px;
+	padding: 8px;
+	border: 1px solid #cbd5e1;
+	border-radius: 5px;
+	background-color: white;
+	color: #111827;
+	font-size: 14px;
+	box-sizing: border-box;
+}
+
+	.grid-input:focus,
+	.grid-dropdown:focus {
+		outline: none;
+		border-color: #1f2937;
+		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.12);
+	}
+
 .main-button {
 	margin-top: 15px;
-	padding: 10px 18px;
+	padding: 11px 20px;
 	background-color: #1f2937;
 	color: white;
 	border: none;
 	cursor: pointer;
+	border-radius: 5px;
+	font-weight: bold;
 }
 
 	.main-button:hover {
@@ -117,11 +183,13 @@
 	}
 
 .small-button {
-	padding: 7px 12px;
+	padding: 8px 13px;
 	background-color: #1f2937;
 	color: white;
 	border: none;
 	cursor: pointer;
+	border-radius: 5px;
+	font-weight: bold;
 }
 
 	.small-button:hover {
@@ -134,12 +202,14 @@
 }
 
 .back-button {
-	padding: 10px 18px;
+	padding: 11px 20px;
 	background-color: #4b5563;
 	color: white;
 	border: none;
 	cursor: pointer;
 	margin-right: 10px;
+	border-radius: 5px;
+	font-weight: bold;
 }
 
 	.back-button:hover {
@@ -147,13 +217,36 @@
 	}
 
 .logout-button {
-	padding: 10px 18px;
+	padding: 11px 20px;
 	background-color: #b91c1c;
 	color: white;
 	border: none;
 	cursor: pointer;
+	border-radius: 5px;
+	font-weight: bold;
 }
 
 	.logout-button:hover {
 		background-color: #dc2626;
 	}
+
+@media screen and (max-width: 950px) {
+	.page-container {
+		width: 95%;
+		margin: 25px auto;
+		padding: 22px;
+		overflow-x: auto;
+	}
+
+	.button-area {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.back-button,
+	.logout-button {
+		width: 100%;
+		margin-right: 0;
+	}
+}

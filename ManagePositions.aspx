@@ -21,7 +21,9 @@
                 <asp:Label ID="lblUsername" runat="server" CssClass="username-label"></asp:Label>
             </div>
 
-            <asp:Label ID="lblMessage" runat="server" CssClass="message-label"></asp:Label>
+            <asp:Panel ID="pnlMessage" runat="server" CssClass="alert-box" Visible="False">
+                <asp:Label ID="lblMessage" runat="server"></asp:Label>
+            </asp:Panel>
 
             <div class="form-box">
                 <h3>Add New Position</h3>
@@ -50,28 +52,50 @@
                 AutoGenerateColumns="False"
                 CssClass="data-table"
                 GridLines="None"
-                DataKeyNames="PositionID">
+                DataKeyNames="PositionID,FacultyID">
 
                 <Columns>
                     <asp:BoundField DataField="PositionID" HeaderText="ID" ReadOnly="True" />
                     <asp:BoundField DataField="ElectionTitle" HeaderText="Election" />
-                    <asp:BoundField DataField="PositionTitle" HeaderText="Position" />
-                    <asp:BoundField DataField="FacultyName" HeaderText="Faculty" />
+
+                    <asp:TemplateField HeaderText="Position Title">
+                        <ItemTemplate>
+                            <asp:TextBox 
+                                ID="txtGridPositionTitle" 
+                                runat="server" 
+                                CssClass="grid-input"
+                                Text='<%# Eval("PositionTitle") %>'>
+                            </asp:TextBox>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+
+                    <asp:TemplateField HeaderText="Faculty">
+                        <ItemTemplate>
+                            <asp:DropDownList 
+                                ID="ddlGridFaculty" 
+                                runat="server" 
+                                CssClass="grid-dropdown">
+                            </asp:DropDownList>
+                        </ItemTemplate>
+                    </asp:TemplateField>
 
                     <asp:TemplateField HeaderText="Active">
                         <ItemTemplate>
-                            <asp:CheckBox ID="chkIsActive" runat="server" Checked='<%# Convert.ToBoolean(Eval("IsActive")) %>' />
+                            <asp:CheckBox 
+                                ID="chkIsActive" 
+                                runat="server" 
+                                Checked='<%# Convert.ToBoolean(Eval("IsActive")) %>' />
                         </ItemTemplate>
                     </asp:TemplateField>
 
                     <asp:TemplateField HeaderText="Action">
                         <ItemTemplate>
                             <asp:Button 
-                                ID="btnUpdateActive" 
+                                ID="btnUpdatePosition" 
                                 runat="server" 
                                 Text="Update" 
                                 CssClass="small-button" 
-                                CommandName="UpdateActive" 
+                                CommandName="UpdatePosition" 
                                 CommandArgument='<%# Container.DataItemIndex %>' />
                         </ItemTemplate>
                     </asp:TemplateField>
