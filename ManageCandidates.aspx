@@ -21,7 +21,9 @@
                 <asp:Label ID="lblUsername" runat="server" CssClass="username-label"></asp:Label>
             </div>
 
-            <asp:Label ID="lblMessage" runat="server" CssClass="message-label"></asp:Label>
+            <asp:Panel ID="pnlMessage" runat="server" CssClass="alert-box" Visible="False">
+                <asp:Label ID="lblMessage" runat="server"></asp:Label>
+            </asp:Panel>
 
             <div class="form-box">
                 <h3>Add New Candidate</h3>
@@ -60,17 +62,67 @@
                 AutoGenerateColumns="False"
                 CssClass="data-table"
                 GridLines="None"
-                DataKeyNames="CandidateID">
+                DataKeyNames="CandidateID,FacultyID">
 
                 <Columns>
                     <asp:BoundField DataField="CandidateID" HeaderText="ID" ReadOnly="True" />
                     <asp:BoundField DataField="ElectionTitle" HeaderText="Election" />
                     <asp:BoundField DataField="PositionTitle" HeaderText="Position" />
-                    <asp:BoundField DataField="FullName" HeaderText="Candidate Name" />
-                    <asp:BoundField DataField="FacultyName" HeaderText="Faculty" />
-                    <asp:BoundField DataField="Major" HeaderText="Major" />
-                    <asp:BoundField DataField="YearLevel" HeaderText="Year" />
-                    <asp:BoundField DataField="Description" HeaderText="Description" />
+
+                    <asp:TemplateField HeaderText="Candidate Name">
+                        <ItemTemplate>
+                            <asp:TextBox 
+                                ID="txtGridFullName" 
+                                runat="server" 
+                                CssClass="grid-input"
+                                Text='<%# Eval("FullName") %>'>
+                            </asp:TextBox>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+
+                    <asp:TemplateField HeaderText="Faculty">
+                        <ItemTemplate>
+                            <asp:DropDownList 
+                                ID="ddlGridFaculty" 
+                                runat="server" 
+                                CssClass="grid-dropdown">
+                            </asp:DropDownList>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+
+                    <asp:TemplateField HeaderText="Major">
+                        <ItemTemplate>
+                            <asp:TextBox 
+                                ID="txtGridMajor" 
+                                runat="server" 
+                                CssClass="grid-input"
+                                Text='<%# Eval("Major") %>'>
+                            </asp:TextBox>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+
+                    <asp:TemplateField HeaderText="Year">
+                        <ItemTemplate>
+                            <asp:TextBox 
+                                ID="txtGridYearLevel" 
+                                runat="server" 
+                                CssClass="grid-year-input"
+                                Text='<%# Eval("YearLevel") %>'>
+                            </asp:TextBox>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+
+                    <asp:TemplateField HeaderText="Description">
+                        <ItemTemplate>
+                            <asp:TextBox 
+                                ID="txtGridDescription" 
+                                runat="server" 
+                                CssClass="grid-textarea"
+                                TextMode="MultiLine"
+                                Text='<%# Eval("Description") %>'>
+                            </asp:TextBox>
+                        </ItemTemplate>
+                    </asp:TemplateField>
 
                     <asp:TemplateField HeaderText="Active">
                         <ItemTemplate>
@@ -84,11 +136,11 @@
                     <asp:TemplateField HeaderText="Action">
                         <ItemTemplate>
                             <asp:Button 
-                                ID="btnUpdateActive" 
+                                ID="btnUpdateCandidate" 
                                 runat="server" 
                                 Text="Update" 
                                 CssClass="small-button" 
-                                CommandName="UpdateActive" 
+                                CommandName="UpdateCandidate" 
                                 CommandArgument='<%# Container.DataItemIndex %>' />
                         </ItemTemplate>
                     </asp:TemplateField>
