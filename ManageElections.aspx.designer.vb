@@ -41,6 +41,15 @@ Partial Public Class ManageElections
 	Protected WithEvents lblUsername As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
+	'''pnlMessage control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents pnlMessage As Global.System.Web.UI.WebControls.Panel
+
+	'''<summary>
 	'''lblMessage control.
 	'''</summary>
 	'''<remarks>

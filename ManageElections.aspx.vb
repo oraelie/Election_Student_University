@@ -1,6 +1,7 @@
 ﻿Imports System.Data
 Imports System.Data.SqlClient
 Imports System.Configuration
+Imports System.Globalization
 
 Public Class ManageElections
     Inherits System.Web.UI.Page
@@ -35,6 +36,7 @@ Public Class ManageElections
         lblUsername.Text = "Username: " & adUsername
 
         If Not IsPostBack Then
+            pnlMessage.Visible = False
             LoadElections()
         End If
 
@@ -49,8 +51,8 @@ Public Class ManageElections
                     SELECT 
                         ElectionID,
                         ElectionTitle,
-                        CONVERT(VARCHAR(19), StartDateTime, 120) AS StartDateTime,
-                        CONVERT(VARCHAR(19), EndDateTime, 120) AS EndDateTime,
+                        FORMAT(StartDateTime, 'dd-MM-yyyy HH:mm') AS StartDateTime,
+                        FORMAT(EndDateTime, 'dd-MM-yyyy HH:mm') AS EndDateTime,
                         Status
                     FROM Elections
                     ORDER BY ElectionID DESC
@@ -74,7 +76,10 @@ Public Class ManageElections
 
                         If ddl IsNot Nothing Then
                             Dim status As String = dt.Rows(row.RowIndex)("Status").ToString()
-                            ddl.SelectedValue = status
+
+                            If ddl.Items.FindByValue(status) IsNot Nothing Then
+                                ddl.SelectedValue = status
+                            End If
                         End If
 
                     Next
@@ -84,7 +89,7 @@ Public Class ManageElections
             End Using
 
         Catch ex As Exception
-            lblMessage.Text = "Error loading elections: " & ex.Message
+            ShowMessage("Error loading elections: " & ex.Message, "error")
         End Try
 
     End Sub
@@ -94,25 +99,37 @@ Public Class ManageElections
         Dim electionTitle As String = txtElectionTitle.Text.Trim()
 
         If electionTitle = "" Then
-            lblMessage.Text = "Please enter the election title."
+            ShowMessage("Please enter the election title.", "warning")
             Return
         End If
 
         Dim startDateTime As DateTime
         Dim endDateTime As DateTime
 
-        If Not DateTime.TryParse(txtStartDateTime.Text.Trim(), startDateTime) Then
-            lblMessage.Text = "Invalid start date/time. Use format: 2026-07-02 08:00:00"
+        If Not DateTime.TryParseExact(
+            txtStartDateTime.Text.Trim(),
+            "dd-MM-yyyy HH:mm",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            startDateTime
+        ) Then
+            ShowMessage("Invalid start date/time. Use format: 07-07-2026 11:21", "warning")
             Return
         End If
 
-        If Not DateTime.TryParse(txtEndDateTime.Text.Trim(), endDateTime) Then
-            lblMessage.Text = "Invalid end date/time. Use format: 2026-07-02 16:00:00"
+        If Not DateTime.TryParseExact(
+            txtEndDateTime.Text.Trim(),
+            "dd-MM-yyyy HH:mm",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            endDateTime
+        ) Then
+            ShowMessage("Invalid end date/time. Use format: 07-07-2026 12:21", "warning")
             Return
         End If
 
         If endDateTime <= startDateTime Then
-            lblMessage.Text = "End date/time must be after start date/time."
+            ShowMessage("End date/time must be after start date/time.", "warning")
             Return
         End If
 
@@ -141,12 +158,10 @@ Public Class ManageElections
             AddAuditLog(
                 "Add Election",
                 "Added election: " & electionTitle &
-                ", Start: " & startDateTime.ToString("yyyy-MM-dd HH:mm:ss") &
-                ", End: " & endDateTime.ToString("yyyy-MM-dd HH:mm:ss") &
+                ", Start: " & startDateTime.ToString("dd-MM-yyyy HH:mm") &
+                ", End: " & endDateTime.ToString("dd-MM-yyyy HH:mm") &
                 ", Status: " & ddlStatus.SelectedValue
             )
-
-            lblMessage.Text = "Election added successfully."
 
             txtElectionTitle.Text = ""
             txtStartDateTime.Text = ""
@@ -155,42 +170,100 @@ Public Class ManageElections
 
             LoadElections()
 
+            ShowMessage("Election added successfully.", "success")
+
         Catch ex As Exception
-            lblMessage.Text = "Error adding election: " & ex.Message
+            ShowMessage("Error adding election: " & ex.Message, "error")
         End Try
 
     End Sub
 
     Protected Sub gvElections_RowCommand(sender As Object, e As GridViewCommandEventArgs) Handles gvElections.RowCommand
 
-        If e.CommandName = "UpdateStatus" Then
+        If e.CommandName = "UpdateElection" Then
 
-            Dim rowIndex As Integer = Convert.ToInt32(e.CommandArgument)
-            Dim electionID As Integer = Convert.ToInt32(gvElections.DataKeys(rowIndex).Value)
+            Dim rowIndex As Integer =
+                Convert.ToInt32(e.CommandArgument)
+
+            Dim electionID As Integer =
+                Convert.ToInt32(gvElections.DataKeys(rowIndex).Value)
 
             Dim row As GridViewRow = gvElections.Rows(rowIndex)
 
-            Dim ddl As DropDownList =
+            Dim txtTitle As TextBox =
+                TryCast(row.FindControl("txtGridElectionTitle"), TextBox)
+
+            Dim txtStart As TextBox =
+                TryCast(row.FindControl("txtGridStartDateTime"), TextBox)
+
+            Dim txtEnd As TextBox =
+                TryCast(row.FindControl("txtGridEndDateTime"), TextBox)
+
+            Dim ddlStatusGrid As DropDownList =
                 TryCast(row.FindControl("ddlGridStatus"), DropDownList)
 
-            If ddl Is Nothing Then
-                lblMessage.Text = "Status dropdown not found."
+            If txtTitle Is Nothing OrElse txtStart Is Nothing OrElse txtEnd Is Nothing OrElse ddlStatusGrid Is Nothing Then
+                ShowMessage("One or more election controls were not found.", "error")
                 Return
             End If
 
-            Dim newStatus As String = ddl.SelectedValue
+            Dim electionTitle As String = txtTitle.Text.Trim()
+
+            If electionTitle = "" Then
+                ShowMessage("Election title cannot be empty.", "warning")
+                Return
+            End If
+
+            Dim startDateTime As DateTime
+            Dim endDateTime As DateTime
+
+            If Not DateTime.TryParseExact(
+                txtStart.Text.Trim(),
+                "dd-MM-yyyy HH:mm",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                startDateTime
+            ) Then
+                ShowMessage("Invalid start date/time. Use format: 07-07-2026 11:21", "warning")
+                Return
+            End If
+
+            If Not DateTime.TryParseExact(
+                txtEnd.Text.Trim(),
+                "dd-MM-yyyy HH:mm",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                endDateTime
+            ) Then
+                ShowMessage("Invalid end date/time. Use format: 07-07-2026 12:21", "warning")
+                Return
+            End If
+
+            If endDateTime <= startDateTime Then
+                ShowMessage("End date/time must be after start date/time.", "warning")
+                Return
+            End If
+
+            Dim newStatus As String = ddlStatusGrid.SelectedValue
 
             Try
                 Using con As New SqlConnection(connectionString)
 
                     Dim query As String = "
                         UPDATE Elections
-                        SET Status = @Status
+                        SET 
+                            ElectionTitle = @ElectionTitle,
+                            StartDateTime = @StartDateTime,
+                            EndDateTime = @EndDateTime,
+                            Status = @Status
                         WHERE ElectionID = @ElectionID
                     "
 
                     Using cmd As New SqlCommand(query, con)
 
+                        cmd.Parameters.AddWithValue("@ElectionTitle", electionTitle)
+                        cmd.Parameters.AddWithValue("@StartDateTime", startDateTime)
+                        cmd.Parameters.AddWithValue("@EndDateTime", endDateTime)
                         cmd.Parameters.AddWithValue("@Status", newStatus)
                         cmd.Parameters.AddWithValue("@ElectionID", electionID)
 
@@ -202,16 +275,20 @@ Public Class ManageElections
                 End Using
 
                 AddAuditLog(
-                    "Update Election Status",
+                    "Update Election",
                     "Updated ElectionID: " & electionID.ToString() &
-                    ", New Status: " & newStatus
+                    ", Title: " & electionTitle &
+                    ", Start: " & startDateTime.ToString("dd-MM-yyyy HH:mm") &
+                    ", End: " & endDateTime.ToString("dd-MM-yyyy HH:mm") &
+                    ", Status: " & newStatus
                 )
 
-                lblMessage.Text = "Election status updated successfully."
                 LoadElections()
 
+                ShowMessage("Election updated successfully.", "success")
+
             Catch ex As Exception
-                lblMessage.Text = "Error updating status: " & ex.Message
+                ShowMessage("Error updating election: " & ex.Message, "error")
             End Try
 
         End If
@@ -253,14 +330,33 @@ Public Class ManageElections
 
     End Sub
 
+    Private Sub ShowMessage(message As String, messageType As String)
+
+        lblMessage.Text = message
+        pnlMessage.Visible = True
+
+        If messageType = "success" Then
+            pnlMessage.CssClass = "alert-box alert-success"
+        ElseIf messageType = "warning" Then
+            pnlMessage.CssClass = "alert-box alert-warning"
+        Else
+            pnlMessage.CssClass = "alert-box alert-error"
+        End If
+
+    End Sub
+
     Protected Sub btnBack_Click(sender As Object, e As EventArgs) Handles btnBack.Click
+
         Response.Redirect("AdminDashboard.aspx")
+
     End Sub
 
     Protected Sub btnLogout_Click(sender As Object, e As EventArgs) Handles btnLogout.Click
+
         Session.Clear()
         Session.Abandon()
         Response.Redirect("Login.aspx")
+
     End Sub
 
 End Class
