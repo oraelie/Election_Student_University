@@ -6,7 +6,7 @@
 }
 
 .page-container {
-	width: 1300px;
+	width: 1350px;
 	margin: 50px auto;
 	padding: 30px;
 	background-color: white;
@@ -25,7 +25,8 @@
 
 	.page-container h3 {
 		color: #1f2937;
-		margin-top: 25px;
+		margin-top: 0;
+		margin-bottom: 18px;
 	}
 
 .user-box {
@@ -78,7 +79,9 @@
 	border-left-color: #dc2626;
 }
 
-.form-box {
+/* Add and filter boxes */
+.form-box,
+.filter-box {
 	background-color: #f9fafb;
 	border: 1px solid #e5e7eb;
 	padding: 20px;
@@ -86,13 +89,24 @@
 	margin-bottom: 25px;
 }
 
-	.form-box label {
+	.form-box label,
+	.filter-item label {
 		display: block;
 		margin-top: 12px;
 		margin-bottom: 6px;
 		font-weight: bold;
 		color: #1f2937;
 	}
+
+.filter-row {
+	display: flex;
+	gap: 18px;
+	margin-bottom: 15px;
+}
+
+.filter-item {
+	flex: 1;
+}
 
 .input-box {
 	width: 100%;
@@ -110,11 +124,11 @@
 		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.15);
 	}
 
-.textarea-box {
-	height: 90px;
-	resize: vertical;
+.filter-buttons {
+	margin-top: 12px;
 }
 
+/* Table */
 .data-table {
 	width: 100%;
 	border-collapse: collapse;
@@ -132,7 +146,7 @@
 	.data-table td {
 		padding: 10px;
 		border-bottom: 1px solid #e5e7eb;
-		vertical-align: top;
+		vertical-align: middle;
 	}
 
 	.data-table tr:nth-child(even) {
@@ -141,7 +155,7 @@
 
 .grid-input {
 	width: 150px;
-	padding: 7px;
+	padding: 8px;
 	border: 1px solid #cbd5e1;
 	border-radius: 5px;
 	font-size: 14px;
@@ -149,17 +163,27 @@
 }
 
 .grid-year-input {
-	width: 60px;
-	padding: 7px;
+	width: 70px;
+	padding: 8px;
 	border: 1px solid #cbd5e1;
 	border-radius: 5px;
 	font-size: 14px;
 	box-sizing: border-box;
 }
 
+.grid-description {
+	width: 220px;
+	padding: 8px;
+	border: 1px solid #cbd5e1;
+	border-radius: 5px;
+	font-size: 14px;
+	box-sizing: border-box;
+	resize: vertical;
+}
+
 .grid-dropdown {
-	width: 180px;
-	padding: 7px;
+	width: 200px;
+	padding: 8px;
 	border: 1px solid #cbd5e1;
 	border-radius: 5px;
 	background-color: white;
@@ -168,28 +192,22 @@
 	box-sizing: border-box;
 }
 
-.grid-textarea {
-	width: 210px;
-	height: 70px;
-	padding: 7px;
-	border: 1px solid #cbd5e1;
-	border-radius: 5px;
-	font-size: 14px;
-	resize: vertical;
-	box-sizing: border-box;
-}
-
 	.grid-input:focus,
 	.grid-year-input:focus,
-	.grid-dropdown:focus,
-	.grid-textarea:focus {
+	.grid-description:focus,
+	.grid-dropdown:focus {
 		outline: none;
 		border-color: #1f2937;
 		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.12);
 	}
 
+/* Buttons */
+.button-area {
+	text-align: center;
+	margin-top: 25px;
+}
+
 .main-button {
-	margin-top: 15px;
 	padding: 11px 20px;
 	background-color: #1f2937;
 	color: white;
@@ -197,10 +215,26 @@
 	cursor: pointer;
 	border-radius: 5px;
 	font-weight: bold;
+	margin-right: 8px;
+	margin-top: 15px;
 }
 
 	.main-button:hover {
 		background-color: #374151;
+	}
+
+.clear-button {
+	padding: 11px 20px;
+	background-color: #6b7280;
+	color: white;
+	border: none;
+	cursor: pointer;
+	border-radius: 5px;
+	font-weight: bold;
+}
+
+	.clear-button:hover {
+		background-color: #4b5563;
 	}
 
 .small-button {
@@ -217,18 +251,13 @@
 		background-color: #374151;
 	}
 
-.button-area {
-	text-align: center;
-	margin-top: 25px;
-}
-
 .back-button {
 	padding: 11px 20px;
 	background-color: #4b5563;
 	color: white;
 	border: none;
 	cursor: pointer;
-	margin-right: 10px;
+	margin-right: 8px;
 	border-radius: 5px;
 	font-weight: bold;
 }
@@ -251,7 +280,8 @@
 		background-color: #dc2626;
 	}
 
-@media screen and (max-width: 1000px) {
+/* Responsive */
+@media screen and (max-width: 950px) {
 	.page-container {
 		width: 95%;
 		margin: 25px auto;
@@ -259,12 +289,20 @@
 		overflow-x: auto;
 	}
 
-	.button-area {
+	.filter-row {
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.button-area,
+	.filter-buttons {
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
 	}
 
+	.main-button,
+	.clear-button,
 	.back-button,
 	.logout-button {
 		width: 100%;

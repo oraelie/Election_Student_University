@@ -59,6 +59,15 @@ Partial Public Class ManageCandidates
 	Protected WithEvents lblMessage As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
+	'''txtFullName control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents txtFullName As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
 	'''ddlPosition control.
 	'''</summary>
 	'''<remarks>
@@ -75,15 +84,6 @@ Partial Public Class ManageCandidates
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents ddlFaculty As Global.System.Web.UI.WebControls.DropDownList
-
-	'''<summary>
-	'''txtFullName control.
-	'''</summary>
-	'''<remarks>
-	'''Auto-generated field.
-	'''To modify move field declaration from designer file to code-behind file.
-	'''</remarks>
-	Protected WithEvents txtFullName As Global.System.Web.UI.WebControls.TextBox
 
 	'''<summary>
 	'''txtMajor control.
@@ -122,6 +122,69 @@ Partial Public Class ManageCandidates
 	Protected WithEvents btnAddCandidate As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
+	'''txtCandidateNameFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents txtCandidateNameFilter As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
+	'''ddlElectionFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlElectionFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''ddlPositionFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlPositionFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''ddlFacultyFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlFacultyFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''ddlStatusFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlStatusFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''btnApplyFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnApplyFilter As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''btnClearFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnClearFilter As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
 	'''gvCandidates control.
 	'''</summary>
 	'''<remarks>
@@ -129,6 +192,15 @@ Partial Public Class ManageCandidates
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents gvCandidates As Global.System.Web.UI.WebControls.GridView
+
+	'''<summary>
+	'''btnRefresh control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnRefresh As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
 	'''btnBack control.

@@ -45,10 +45,105 @@ Public Class ManageCandidates
 
         If Not IsPostBack Then
             pnlMessage.Visible = False
-            LoadPositions()
             LoadFaculties()
+            LoadElections()
+            LoadPositions()
+            LoadPositionFilter()
             LoadCandidates()
         End If
+
+    End Sub
+
+    Private Sub LoadFaculties()
+
+        Try
+            Using con As New SqlConnection(connectionString)
+
+                Dim query As String = "
+                    SELECT 
+                        FacultyID,
+                        FacultyName
+                    FROM Faculties
+                    WHERE IsActive = 1
+                    ORDER BY FacultyName
+                "
+
+                Using cmd As New SqlCommand(query, con)
+
+                    Dim dt As New DataTable()
+
+                    Using da As New SqlDataAdapter(cmd)
+                        da.Fill(dt)
+                    End Using
+
+                    FacultiesTable = dt
+
+                    ddlFaculty.Items.Clear()
+                    ddlFacultyFilter.Items.Clear()
+
+                    ddlFaculty.Items.Add(New ListItem("Select Faculty", ""))
+                    ddlFacultyFilter.Items.Add(New ListItem("All Faculties", ""))
+
+                    For Each row As DataRow In dt.Rows
+
+                        Dim facultyID As String = row("FacultyID").ToString()
+                        Dim facultyName As String = row("FacultyName").ToString()
+
+                        ddlFaculty.Items.Add(New ListItem(facultyName, facultyID))
+                        ddlFacultyFilter.Items.Add(New ListItem(facultyName, facultyID))
+
+                    Next
+
+                End Using
+
+            End Using
+
+        Catch ex As Exception
+            ShowMessage("Error loading faculties: " & ex.Message, "error")
+        End Try
+
+    End Sub
+
+    Private Sub LoadElections()
+
+        Try
+            Using con As New SqlConnection(connectionString)
+
+                Dim query As String = "
+                    SELECT 
+                        ElectionID,
+                        ElectionTitle
+                    FROM Elections
+                    ORDER BY ElectionID DESC
+                "
+
+                Using cmd As New SqlCommand(query, con)
+
+                    Dim dt As New DataTable()
+
+                    Using da As New SqlDataAdapter(cmd)
+                        da.Fill(dt)
+                    End Using
+
+                    ddlElectionFilter.Items.Clear()
+                    ddlElectionFilter.Items.Add(New ListItem("All Elections", ""))
+
+                    For Each row As DataRow In dt.Rows
+                        ddlElectionFilter.Items.Add(
+                            New ListItem(
+                                row("ElectionTitle").ToString(),
+                                row("ElectionID").ToString()
+                            )
+                        )
+                    Next
+
+                End Using
+
+            End Using
+
+        Catch ex As Exception
+            ShowMessage("Error loading elections: " & ex.Message, "error")
+        End Try
 
     End Sub
 
@@ -76,10 +171,17 @@ Public Class ManageCandidates
                         da.Fill(dt)
                     End Using
 
-                    ddlPosition.DataSource = dt
-                    ddlPosition.DataTextField = "PositionDisplay"
-                    ddlPosition.DataValueField = "PositionID"
-                    ddlPosition.DataBind()
+                    ddlPosition.Items.Clear()
+                    ddlPosition.Items.Add(New ListItem("Select Position", ""))
+
+                    For Each row As DataRow In dt.Rows
+                        ddlPosition.Items.Add(
+                            New ListItem(
+                                row("PositionDisplay").ToString(),
+                                row("PositionID").ToString()
+                            )
+                        )
+                    Next
 
                 End Using
 
@@ -91,19 +193,37 @@ Public Class ManageCandidates
 
     End Sub
 
-    Private Sub LoadFaculties()
+    Private Sub LoadPositionFilter()
 
         Try
             Using con As New SqlConnection(connectionString)
 
                 Dim query As String = "
-                    SELECT FacultyID, FacultyName
-                    FROM Faculties
-                    WHERE IsActive = 1
-                    ORDER BY FacultyName
+                    SELECT 
+                        P.PositionID,
+                        E.ElectionID,
+                        E.ElectionTitle + ' - ' + P.PositionTitle AS PositionDisplay
+                    FROM Positions P
+                    INNER JOIN Elections E
+                        ON P.ElectionID = E.ElectionID
+                    WHERE 1 = 1
+                "
+
+                If ddlElectionFilter.SelectedValue <> "" Then
+                    query &= "
+                        AND E.ElectionID = @ElectionID
+                    "
+                End If
+
+                query &= "
+                    ORDER BY E.ElectionID DESC, P.PositionTitle
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
+                    If ddlElectionFilter.SelectedValue <> "" Then
+                        cmd.Parameters.AddWithValue("@ElectionID", Convert.ToInt32(ddlElectionFilter.SelectedValue))
+                    End If
 
                     Dim dt As New DataTable()
 
@@ -111,24 +231,35 @@ Public Class ManageCandidates
                         da.Fill(dt)
                     End Using
 
-                    FacultiesTable = dt
+                    ddlPositionFilter.Items.Clear()
+                    ddlPositionFilter.Items.Add(New ListItem("All Positions", ""))
 
-                    ddlFaculty.DataSource = dt
-                    ddlFaculty.DataTextField = "FacultyName"
-                    ddlFaculty.DataValueField = "FacultyID"
-                    ddlFaculty.DataBind()
+                    For Each row As DataRow In dt.Rows
+                        ddlPositionFilter.Items.Add(
+                            New ListItem(
+                                row("PositionDisplay").ToString(),
+                                row("PositionID").ToString()
+                            )
+                        )
+                    Next
 
                 End Using
 
             End Using
 
         Catch ex As Exception
-            ShowMessage("Error loading faculties: " & ex.Message, "error")
+            ShowMessage("Error loading position filter: " & ex.Message, "error")
         End Try
 
     End Sub
 
     Private Sub LoadCandidates()
+
+        Dim candidateNameFilter As String = txtCandidateNameFilter.Text.Trim()
+        Dim electionFilter As String = ddlElectionFilter.SelectedValue
+        Dim positionFilter As String = ddlPositionFilter.SelectedValue
+        Dim facultyFilter As String = ddlFacultyFilter.SelectedValue
+        Dim statusFilter As String = ddlStatusFilter.SelectedValue
 
         Try
             Using con As New SqlConnection(connectionString)
@@ -136,9 +267,11 @@ Public Class ManageCandidates
                 Dim query As String = "
                     SELECT 
                         C.CandidateID,
-                        E.ElectionTitle,
-                        P.PositionTitle,
                         C.FullName,
+                        C.PositionID,
+                        P.PositionTitle,
+                        E.ElectionID,
+                        E.ElectionTitle,
                         C.FacultyID,
                         F.FacultyName,
                         C.Major,
@@ -152,10 +285,64 @@ Public Class ManageCandidates
                         ON P.ElectionID = E.ElectionID
                     INNER JOIN Faculties F
                         ON C.FacultyID = F.FacultyID
+                    WHERE 1 = 1
+                "
+
+                If candidateNameFilter <> "" Then
+                    query &= "
+                        AND C.FullName LIKE @FullName
+                    "
+                End If
+
+                If electionFilter <> "" Then
+                    query &= "
+                        AND E.ElectionID = @ElectionID
+                    "
+                End If
+
+                If positionFilter <> "" Then
+                    query &= "
+                        AND C.PositionID = @PositionID
+                    "
+                End If
+
+                If facultyFilter <> "" Then
+                    query &= "
+                        AND C.FacultyID = @FacultyID
+                    "
+                End If
+
+                If statusFilter <> "" Then
+                    query &= "
+                        AND C.IsActive = @IsActive
+                    "
+                End If
+
+                query &= "
                     ORDER BY E.ElectionID DESC, P.PositionTitle, C.FullName
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
+                    If candidateNameFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@FullName", "%" & candidateNameFilter & "%")
+                    End If
+
+                    If electionFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@ElectionID", Convert.ToInt32(electionFilter))
+                    End If
+
+                    If positionFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@PositionID", Convert.ToInt32(positionFilter))
+                    End If
+
+                    If facultyFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(facultyFilter))
+                    End If
+
+                    If statusFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@IsActive", Convert.ToBoolean(Convert.ToInt32(statusFilter)))
+                    End If
 
                     Dim dt As New DataTable()
 
@@ -166,7 +353,14 @@ Public Class ManageCandidates
                     gvCandidates.DataSource = dt
                     gvCandidates.DataBind()
 
-                    BindFacultyDropdownsInGrid(dt)
+                    BindFacultyDropDownsInGrid(dt)
+
+                    If dt.Rows.Count = 0 Then
+                        ShowMessage("No candidates found for the selected filter.", "warning")
+                    Else
+                        pnlMessage.Visible = False
+                        lblMessage.Text = ""
+                    End If
 
                 End Using
 
@@ -178,7 +372,7 @@ Public Class ManageCandidates
 
     End Sub
 
-    Private Sub BindFacultyDropdownsInGrid(candidatesTable As DataTable)
+    Private Sub BindFacultyDropDownsInGrid(candidatesTable As DataTable)
 
         If FacultiesTable Is Nothing Then
             Return
@@ -191,16 +385,24 @@ Public Class ManageCandidates
 
             If ddl IsNot Nothing Then
 
-                ddl.DataSource = FacultiesTable
-                ddl.DataTextField = "FacultyName"
-                ddl.DataValueField = "FacultyID"
-                ddl.DataBind()
+                ddl.Items.Clear()
 
-                Dim currentFacultyID As String =
+                For Each facultyRow As DataRow In FacultiesTable.Rows
+
+                    ddl.Items.Add(
+                        New ListItem(
+                            facultyRow("FacultyName").ToString(),
+                            facultyRow("FacultyID").ToString()
+                        )
+                    )
+
+                Next
+
+                Dim selectedFacultyID As String =
                     candidatesTable.Rows(row.RowIndex)("FacultyID").ToString()
 
-                If ddl.Items.FindByValue(currentFacultyID) IsNot Nothing Then
-                    ddl.SelectedValue = currentFacultyID
+                If ddl.Items.FindByValue(selectedFacultyID) IsNot Nothing Then
+                    ddl.SelectedValue = selectedFacultyID
                 End If
 
             End If
@@ -210,6 +412,15 @@ Public Class ManageCandidates
     End Sub
 
     Protected Sub btnAddCandidate_Click(sender As Object, e As EventArgs) Handles btnAddCandidate.Click
+
+        Dim fullName As String = txtFullName.Text.Trim()
+        Dim major As String = txtMajor.Text.Trim()
+        Dim description As String = txtDescription.Text.Trim()
+
+        If fullName = "" Then
+            ShowMessage("Please enter the candidate full name.", "warning")
+            Return
+        End If
 
         If ddlPosition.SelectedValue = "" Then
             ShowMessage("Please select a position.", "warning")
@@ -221,15 +432,6 @@ Public Class ManageCandidates
             Return
         End If
 
-        Dim candidateName As String = txtFullName.Text.Trim()
-        Dim major As String = txtMajor.Text.Trim()
-        Dim description As String = txtDescription.Text.Trim()
-
-        If candidateName = "" Then
-            ShowMessage("Please enter the candidate full name.", "warning")
-            Return
-        End If
-
         Dim yearLevel As Integer
 
         If txtYearLevel.Text.Trim() <> "" Then
@@ -237,12 +439,12 @@ Public Class ManageCandidates
                 ShowMessage("Year level must be a number.", "warning")
                 Return
             End If
+        Else
+            yearLevel = 0
         End If
 
         Dim positionID As Integer = Convert.ToInt32(ddlPosition.SelectedValue)
         Dim facultyID As Integer = Convert.ToInt32(ddlFaculty.SelectedValue)
-        Dim positionText As String = ddlPosition.SelectedItem.Text
-        Dim facultyText As String = ddlFaculty.SelectedItem.Text
 
         Try
             Using con As New SqlConnection(connectionString)
@@ -256,27 +458,12 @@ Public Class ManageCandidates
 
                 Using cmd As New SqlCommand(query, con)
 
-                    cmd.Parameters.AddWithValue("@FullName", candidateName)
+                    cmd.Parameters.AddWithValue("@FullName", fullName)
                     cmd.Parameters.AddWithValue("@PositionID", positionID)
                     cmd.Parameters.AddWithValue("@FacultyID", facultyID)
-
-                    If major = "" Then
-                        cmd.Parameters.AddWithValue("@Major", DBNull.Value)
-                    Else
-                        cmd.Parameters.AddWithValue("@Major", major)
-                    End If
-
-                    If txtYearLevel.Text.Trim() = "" Then
-                        cmd.Parameters.AddWithValue("@YearLevel", DBNull.Value)
-                    Else
-                        cmd.Parameters.AddWithValue("@YearLevel", yearLevel)
-                    End If
-
-                    If description = "" Then
-                        cmd.Parameters.AddWithValue("@Description", DBNull.Value)
-                    Else
-                        cmd.Parameters.AddWithValue("@Description", description)
-                    End If
+                    cmd.Parameters.AddWithValue("@Major", major)
+                    cmd.Parameters.AddWithValue("@YearLevel", yearLevel)
+                    cmd.Parameters.AddWithValue("@Description", description)
 
                     con.Open()
                     cmd.ExecuteNonQuery()
@@ -287,10 +474,8 @@ Public Class ManageCandidates
 
             AddAuditLog(
                 "Add Candidate",
-                "Added candidate: " & candidateName &
-                ", Position: " & positionText &
+                "Added candidate: " & fullName &
                 ", PositionID: " & positionID.ToString() &
-                ", Faculty: " & facultyText &
                 ", FacultyID: " & facultyID.ToString()
             )
 
@@ -298,6 +483,9 @@ Public Class ManageCandidates
             txtMajor.Text = ""
             txtYearLevel.Text = ""
             txtDescription.Text = ""
+
+            ddlPosition.SelectedIndex = 0
+            ddlFaculty.SelectedIndex = 0
 
             LoadCandidates()
 
@@ -324,50 +512,53 @@ Public Class ManageCandidates
 
             Dim row As GridViewRow = gvCandidates.Rows(rowIndex)
 
-            Dim txtName As TextBox =
+            Dim txtGridFullName As TextBox =
                 TryCast(row.FindControl("txtGridFullName"), TextBox)
 
-            Dim ddlFaculty As DropDownList =
+            Dim ddlGridFaculty As DropDownList =
                 TryCast(row.FindControl("ddlGridFaculty"), DropDownList)
 
-            Dim txtMajor As TextBox =
+            Dim txtGridMajor As TextBox =
                 TryCast(row.FindControl("txtGridMajor"), TextBox)
 
-            Dim txtYear As TextBox =
+            Dim txtGridYearLevel As TextBox =
                 TryCast(row.FindControl("txtGridYearLevel"), TextBox)
 
-            Dim txtDesc As TextBox =
+            Dim txtGridDescription As TextBox =
                 TryCast(row.FindControl("txtGridDescription"), TextBox)
 
-            Dim chk As CheckBox =
+            Dim chkIsActive As CheckBox =
                 TryCast(row.FindControl("chkIsActive"), CheckBox)
 
-            If txtName Is Nothing OrElse ddlFaculty Is Nothing OrElse txtMajor Is Nothing OrElse txtYear Is Nothing OrElse txtDesc Is Nothing OrElse chk Is Nothing Then
-                ShowMessage("One or more controls were not found.", "error")
+            If txtGridFullName Is Nothing OrElse ddlGridFaculty Is Nothing OrElse txtGridMajor Is Nothing OrElse
+               txtGridYearLevel Is Nothing OrElse txtGridDescription Is Nothing OrElse chkIsActive Is Nothing Then
+
+                ShowMessage("One or more candidate controls were not found.", "error")
                 Return
+
             End If
 
-            Dim candidateName As String = txtName.Text.Trim()
-            Dim major As String = txtMajor.Text.Trim()
-            Dim description As String = txtDesc.Text.Trim()
-            Dim yearText As String = txtYear.Text.Trim()
+            Dim fullName As String = txtGridFullName.Text.Trim()
+            Dim major As String = txtGridMajor.Text.Trim()
+            Dim description As String = txtGridDescription.Text.Trim()
+            Dim newFacultyID As Integer = Convert.ToInt32(ddlGridFaculty.SelectedValue)
+            Dim isActive As Boolean = chkIsActive.Checked
 
-            If candidateName = "" Then
+            If fullName = "" Then
                 ShowMessage("Candidate name cannot be empty.", "warning")
                 Return
             End If
 
             Dim yearLevel As Integer
 
-            If yearText <> "" Then
-                If Not Integer.TryParse(yearText, yearLevel) Then
+            If txtGridYearLevel.Text.Trim() <> "" Then
+                If Not Integer.TryParse(txtGridYearLevel.Text.Trim(), yearLevel) Then
                     ShowMessage("Year level must be a number.", "warning")
                     Return
                 End If
+            Else
+                yearLevel = 0
             End If
-
-            Dim newFacultyID As Integer = Convert.ToInt32(ddlFaculty.SelectedValue)
-            Dim isActive As Boolean = chk.Checked
 
             Try
                 Using con As New SqlConnection(connectionString)
@@ -386,27 +577,11 @@ Public Class ManageCandidates
 
                     Using cmd As New SqlCommand(query, con)
 
-                        cmd.Parameters.AddWithValue("@FullName", candidateName)
+                        cmd.Parameters.AddWithValue("@FullName", fullName)
                         cmd.Parameters.AddWithValue("@FacultyID", newFacultyID)
-
-                        If major = "" Then
-                            cmd.Parameters.AddWithValue("@Major", DBNull.Value)
-                        Else
-                            cmd.Parameters.AddWithValue("@Major", major)
-                        End If
-
-                        If yearText = "" Then
-                            cmd.Parameters.AddWithValue("@YearLevel", DBNull.Value)
-                        Else
-                            cmd.Parameters.AddWithValue("@YearLevel", yearLevel)
-                        End If
-
-                        If description = "" Then
-                            cmd.Parameters.AddWithValue("@Description", DBNull.Value)
-                        Else
-                            cmd.Parameters.AddWithValue("@Description", description)
-                        End If
-
+                        cmd.Parameters.AddWithValue("@Major", major)
+                        cmd.Parameters.AddWithValue("@YearLevel", yearLevel)
+                        cmd.Parameters.AddWithValue("@Description", description)
                         cmd.Parameters.AddWithValue("@IsActive", isActive)
                         cmd.Parameters.AddWithValue("@CandidateID", candidateID)
 
@@ -420,10 +595,10 @@ Public Class ManageCandidates
                 AddAuditLog(
                     "Update Candidate",
                     "Updated CandidateID: " & candidateID.ToString() &
-                    ", Name: " & candidateName &
+                    ", Name: " & fullName &
                     ", Old FacultyID: " & oldFacultyID &
                     ", New FacultyID: " & newFacultyID.ToString() &
-                    ", Active = " & isActive.ToString()
+                    ", Active: " & isActive.ToString()
                 )
 
                 LoadCandidates()
@@ -435,6 +610,53 @@ Public Class ManageCandidates
             End Try
 
         End If
+
+    End Sub
+
+    Protected Sub ddlElectionFilter_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ddlElectionFilter.SelectedIndexChanged
+
+        LoadPositionFilter()
+        LoadCandidates()
+
+    End Sub
+
+    Protected Sub btnApplyFilter_Click(sender As Object, e As EventArgs) Handles btnApplyFilter.Click
+
+        LoadCandidates()
+
+    End Sub
+
+    Protected Sub btnClearFilter_Click(sender As Object, e As EventArgs) Handles btnClearFilter.Click
+
+        txtCandidateNameFilter.Text = ""
+
+        If ddlElectionFilter.Items.Count > 0 Then
+            ddlElectionFilter.SelectedIndex = 0
+        End If
+
+        LoadPositionFilter()
+
+        If ddlPositionFilter.Items.Count > 0 Then
+            ddlPositionFilter.SelectedIndex = 0
+        End If
+
+        If ddlFacultyFilter.Items.Count > 0 Then
+            ddlFacultyFilter.SelectedIndex = 0
+        End If
+
+        ddlStatusFilter.SelectedValue = ""
+
+        LoadCandidates()
+
+    End Sub
+
+    Protected Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
+
+        LoadFaculties()
+        LoadElections()
+        LoadPositions()
+        LoadPositionFilter()
+        LoadCandidates()
 
     End Sub
 
