@@ -231,10 +231,25 @@
 	cursor: pointer;
 	border-radius: 5px;
 	font-weight: bold;
+	margin-right: 8px;
 }
 
 	.clear-button:hover {
 		background-color: #4b5563;
+	}
+
+.export-button {
+	padding: 11px 20px;
+	background-color: #047857;
+	color: white;
+	border: none;
+	cursor: pointer;
+	border-radius: 5px;
+	font-weight: bold;
+}
+
+	.export-button:hover {
+		background-color: #059669;
 	}
 
 .small-button {
@@ -303,6 +318,7 @@
 
 	.main-button,
 	.clear-button,
+	.export-button,
 	.back-button,
 	.logout-button {
 		width: 100%;
