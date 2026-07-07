@@ -37,11 +37,19 @@
             </div>
 
             <div class="button-area top-buttons">
+
                 <asp:Button 
                     ID="btnRefresh" 
                     runat="server" 
                     Text="Refresh Results" 
                     CssClass="main-button" />
+
+                <asp:Button 
+                    ID="btnExportExcel" 
+                    runat="server" 
+                    Text="Export to Excel" 
+                    CssClass="export-button" />
+
             </div>
 
             <asp:GridView 

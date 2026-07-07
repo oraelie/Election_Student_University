@@ -77,6 +77,15 @@ Partial Public Class Results
 	Protected WithEvents btnRefresh As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
+	'''btnExportExcel control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnExportExcel As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
 	'''gvResults control.
 	'''</summary>
 	'''<remarks>

@@ -95,6 +95,60 @@ Partial Public Class ManagePositions
 	Protected WithEvents btnAddPosition As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
+	'''ddlElectionFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlElectionFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''txtPositionTitleFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents txtPositionTitleFilter As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
+	'''ddlFacultyFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlFacultyFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''ddlStatusFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlStatusFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''btnApplyFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnApplyFilter As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''btnClearFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnClearFilter As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
 	'''gvPositions control.
 	'''</summary>
 	'''<remarks>
@@ -102,6 +156,15 @@ Partial Public Class ManagePositions
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents gvPositions As Global.System.Web.UI.WebControls.GridView
+
+	'''<summary>
+	'''btnRefresh control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnRefresh As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
 	'''btnBack control.

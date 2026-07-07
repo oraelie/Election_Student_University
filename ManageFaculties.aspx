@@ -26,14 +26,14 @@
             </asp:Panel>
 
             <div class="form-box">
-                <h3>Add New Faculty</h3>
+                <h3>Add Faculty</h3>
 
                 <label>Faculty Name</label>
                 <asp:TextBox 
                     ID="txtFacultyName" 
                     runat="server" 
                     CssClass="input-box"
-                    placeholder="Example: Faculty of Computer Science">
+                    placeholder="Example: Faculty of Engineering">
                 </asp:TextBox>
 
                 <asp:Button 
@@ -41,6 +41,54 @@
                     runat="server" 
                     Text="Add Faculty" 
                     CssClass="main-button" />
+            </div>
+
+            <div class="filter-box">
+
+                <h3>Filter Faculties</h3>
+
+                <div class="filter-row">
+
+                    <div class="filter-item">
+                        <label>Faculty Name</label>
+                        <asp:TextBox 
+                            ID="txtFacultyNameFilter" 
+                            runat="server" 
+                            CssClass="input-box"
+                            placeholder="Search by faculty name">
+                        </asp:TextBox>
+                    </div>
+
+                    <div class="filter-item">
+                        <label>Status</label>
+                        <asp:DropDownList 
+                            ID="ddlStatusFilter" 
+                            runat="server" 
+                            CssClass="input-box">
+
+                            <asp:ListItem Text="All" Value=""></asp:ListItem>
+                            <asp:ListItem Text="Active" Value="1"></asp:ListItem>
+                            <asp:ListItem Text="Inactive" Value="0"></asp:ListItem>
+
+                        </asp:DropDownList>
+                    </div>
+
+                </div>
+
+                <div class="filter-buttons">
+                    <asp:Button 
+                        ID="btnApplyFilter" 
+                        runat="server" 
+                        Text="Apply Filter" 
+                        CssClass="main-button" />
+
+                    <asp:Button 
+                        ID="btnClearFilter" 
+                        runat="server" 
+                        Text="Clear Filter" 
+                        CssClass="clear-button" />
+                </div>
+
             </div>
 
             <h3>Existing Faculties</h3>
@@ -51,11 +99,23 @@
                 AutoGenerateColumns="False"
                 CssClass="data-table"
                 GridLines="None"
-                DataKeyNames="FacultyID">
+                DataKeyNames="FacultyID"
+                EmptyDataText="No faculties found.">
 
                 <Columns>
+
                     <asp:BoundField DataField="FacultyID" HeaderText="ID" ReadOnly="True" />
-                    <asp:BoundField DataField="FacultyName" HeaderText="Faculty Name" />
+
+                    <asp:TemplateField HeaderText="Faculty Name">
+                        <ItemTemplate>
+                            <asp:TextBox 
+                                ID="txtGridFacultyName" 
+                                runat="server" 
+                                CssClass="grid-input"
+                                Text='<%# Eval("FacultyName") %>'>
+                            </asp:TextBox>
+                        </ItemTemplate>
+                    </asp:TemplateField>
 
                     <asp:TemplateField HeaderText="Active">
                         <ItemTemplate>
@@ -69,19 +129,27 @@
                     <asp:TemplateField HeaderText="Action">
                         <ItemTemplate>
                             <asp:Button 
-                                ID="btnUpdateActive" 
+                                ID="btnUpdateFaculty" 
                                 runat="server" 
                                 Text="Update" 
                                 CssClass="small-button" 
-                                CommandName="UpdateActive" 
+                                CommandName="UpdateFaculty" 
                                 CommandArgument='<%# Container.DataItemIndex %>' />
                         </ItemTemplate>
                     </asp:TemplateField>
+
                 </Columns>
 
             </asp:GridView>
 
             <div class="button-area">
+
+                <asp:Button 
+                    ID="btnRefresh" 
+                    runat="server" 
+                    Text="Refresh" 
+                    CssClass="main-button" />
+
                 <asp:Button 
                     ID="btnBack" 
                     runat="server" 
@@ -93,6 +161,7 @@
                     runat="server" 
                     Text="Logout" 
                     CssClass="logout-button" />
+
             </div>
 
         </div>

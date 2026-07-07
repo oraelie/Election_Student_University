@@ -77,6 +77,42 @@ Partial Public Class ManageFaculties
 	Protected WithEvents btnAddFaculty As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
+	'''txtFacultyNameFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents txtFacultyNameFilter As Global.System.Web.UI.WebControls.TextBox
+
+	'''<summary>
+	'''ddlStatusFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlStatusFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''btnApplyFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnApplyFilter As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
+	'''btnClearFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnClearFilter As Global.System.Web.UI.WebControls.Button
+
+	'''<summary>
 	'''gvFaculties control.
 	'''</summary>
 	'''<remarks>
@@ -84,6 +120,15 @@ Partial Public Class ManageFaculties
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents gvFaculties As Global.System.Web.UI.WebControls.GridView
+
+	'''<summary>
+	'''btnRefresh control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents btnRefresh As Global.System.Web.UI.WebControls.Button
 
 	'''<summary>
 	'''btnBack control.

@@ -58,7 +58,9 @@ Public Class ManagePositions
             Using con As New SqlConnection(connectionString)
 
                 Dim query As String = "
-                    SELECT ElectionID, ElectionTitle
+                    SELECT 
+                        ElectionID,
+                        ElectionTitle
                     FROM Elections
                     ORDER BY ElectionID DESC
                 "
@@ -71,10 +73,21 @@ Public Class ManagePositions
                         da.Fill(dt)
                     End Using
 
-                    ddlElection.DataSource = dt
-                    ddlElection.DataTextField = "ElectionTitle"
-                    ddlElection.DataValueField = "ElectionID"
-                    ddlElection.DataBind()
+                    ddlElection.Items.Clear()
+                    ddlElectionFilter.Items.Clear()
+
+                    ddlElection.Items.Add(New ListItem("Select Election", ""))
+                    ddlElectionFilter.Items.Add(New ListItem("All Elections", ""))
+
+                    For Each row As DataRow In dt.Rows
+
+                        Dim electionID As String = row("ElectionID").ToString()
+                        Dim electionTitle As String = row("ElectionTitle").ToString()
+
+                        ddlElection.Items.Add(New ListItem(electionTitle, electionID))
+                        ddlElectionFilter.Items.Add(New ListItem(electionTitle, electionID))
+
+                    Next
 
                 End Using
 
@@ -92,7 +105,9 @@ Public Class ManagePositions
             Using con As New SqlConnection(connectionString)
 
                 Dim query As String = "
-                    SELECT FacultyID, FacultyName
+                    SELECT 
+                        FacultyID,
+                        FacultyName
                     FROM Faculties
                     WHERE IsActive = 1
                     ORDER BY FacultyName
@@ -109,15 +124,21 @@ Public Class ManagePositions
                     FacultiesTable = dt
 
                     ddlFaculty.Items.Clear()
-                    ddlFaculty.Items.Add(New ListItem("General Position", ""))
+                    ddlFacultyFilter.Items.Clear()
+
+                    ddlFaculty.Items.Add(New ListItem("General Position - All Faculties", ""))
+                    ddlFacultyFilter.Items.Add(New ListItem("All Faculties / General", ""))
+
+                    ddlFacultyFilter.Items.Add(New ListItem("General Positions Only", "GENERAL"))
 
                     For Each row As DataRow In dt.Rows
-                        ddlFaculty.Items.Add(
-                            New ListItem(
-                                row("FacultyName").ToString(),
-                                row("FacultyID").ToString()
-                            )
-                        )
+
+                        Dim facultyID As String = row("FacultyID").ToString()
+                        Dim facultyName As String = row("FacultyName").ToString()
+
+                        ddlFaculty.Items.Add(New ListItem(facultyName, facultyID))
+                        ddlFacultyFilter.Items.Add(New ListItem(facultyName, facultyID))
+
                     Next
 
                 End Using
@@ -132,14 +153,20 @@ Public Class ManagePositions
 
     Private Sub LoadPositions()
 
+        Dim electionFilter As String = ddlElectionFilter.SelectedValue
+        Dim positionTitleFilter As String = txtPositionTitleFilter.Text.Trim()
+        Dim facultyFilter As String = ddlFacultyFilter.SelectedValue
+        Dim statusFilter As String = ddlStatusFilter.SelectedValue
+
         Try
             Using con As New SqlConnection(connectionString)
 
                 Dim query As String = "
                     SELECT 
                         P.PositionID,
-                        E.ElectionTitle,
                         P.PositionTitle,
+                        P.ElectionID,
+                        E.ElectionTitle,
                         P.FacultyID,
                         ISNULL(F.FacultyName, 'General Position') AS FacultyName,
                         P.IsActive
@@ -148,10 +175,62 @@ Public Class ManagePositions
                         ON P.ElectionID = E.ElectionID
                     LEFT JOIN Faculties F
                         ON P.FacultyID = F.FacultyID
-                    ORDER BY E.ElectionID DESC, P.PositionID
+                    WHERE 1 = 1
+                "
+
+                If electionFilter <> "" Then
+                    query &= "
+                        AND P.ElectionID = @ElectionID
+                    "
+                End If
+
+                If positionTitleFilter <> "" Then
+                    query &= "
+                        AND P.PositionTitle LIKE @PositionTitle
+                    "
+                End If
+
+                If facultyFilter <> "" Then
+
+                    If facultyFilter = "GENERAL" Then
+                        query &= "
+                            AND P.FacultyID IS NULL
+                        "
+                    Else
+                        query &= "
+                            AND P.FacultyID = @FacultyID
+                        "
+                    End If
+
+                End If
+
+                If statusFilter <> "" Then
+                    query &= "
+                        AND P.IsActive = @IsActive
+                    "
+                End If
+
+                query &= "
+                    ORDER BY E.ElectionID DESC, P.PositionTitle
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
+                    If electionFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@ElectionID", Convert.ToInt32(electionFilter))
+                    End If
+
+                    If positionTitleFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@PositionTitle", "%" & positionTitleFilter & "%")
+                    End If
+
+                    If facultyFilter <> "" AndAlso facultyFilter <> "GENERAL" Then
+                        cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(facultyFilter))
+                    End If
+
+                    If statusFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@IsActive", Convert.ToBoolean(Convert.ToInt32(statusFilter)))
+                    End If
 
                     Dim dt As New DataTable()
 
@@ -162,7 +241,14 @@ Public Class ManagePositions
                     gvPositions.DataSource = dt
                     gvPositions.DataBind()
 
-                    BindFacultyDropdownsInGrid(dt)
+                    BindFacultyDropDownsInGrid(dt)
+
+                    If dt.Rows.Count = 0 Then
+                        ShowMessage("No positions found for the selected filter.", "warning")
+                    Else
+                        pnlMessage.Visible = False
+                        lblMessage.Text = ""
+                    End If
 
                 End Using
 
@@ -174,7 +260,11 @@ Public Class ManagePositions
 
     End Sub
 
-    Private Sub BindFacultyDropdownsInGrid(positionsTable As DataTable)
+    Private Sub BindFacultyDropDownsInGrid(positionsTable As DataTable)
+
+        If FacultiesTable Is Nothing Then
+            Return
+        End If
 
         For Each row As GridViewRow In gvPositions.Rows
 
@@ -184,30 +274,27 @@ Public Class ManagePositions
             If ddl IsNot Nothing Then
 
                 ddl.Items.Clear()
-                ddl.Items.Add(New ListItem("General Position", ""))
+                ddl.Items.Add(New ListItem("General Position - All Faculties", ""))
 
-                If FacultiesTable IsNot Nothing Then
-                    For Each facultyRow As DataRow In FacultiesTable.Rows
-                        ddl.Items.Add(
-                            New ListItem(
-                                facultyRow("FacultyName").ToString(),
-                                facultyRow("FacultyID").ToString()
-                            )
+                For Each facultyRow As DataRow In FacultiesTable.Rows
+
+                    ddl.Items.Add(
+                        New ListItem(
+                            facultyRow("FacultyName").ToString(),
+                            facultyRow("FacultyID").ToString()
                         )
-                    Next
+                    )
+
+                Next
+
+                Dim selectedFacultyID As String = ""
+
+                If Not IsDBNull(positionsTable.Rows(row.RowIndex)("FacultyID")) Then
+                    selectedFacultyID = positionsTable.Rows(row.RowIndex)("FacultyID").ToString()
                 End If
 
-                Dim currentFacultyValue As Object =
-                    positionsTable.Rows(row.RowIndex)("FacultyID")
-
-                If currentFacultyValue Is DBNull.Value Then
-                    ddl.SelectedValue = ""
-                Else
-                    Dim currentFacultyID As String = currentFacultyValue.ToString()
-
-                    If ddl.Items.FindByValue(currentFacultyID) IsNot Nothing Then
-                        ddl.SelectedValue = currentFacultyID
-                    End If
+                If ddl.Items.FindByValue(selectedFacultyID) IsNot Nothing Then
+                    ddl.SelectedValue = selectedFacultyID
                 End If
 
             End If
@@ -218,12 +305,12 @@ Public Class ManagePositions
 
     Protected Sub btnAddPosition_Click(sender As Object, e As EventArgs) Handles btnAddPosition.Click
 
+        Dim positionTitle As String = txtPositionTitle.Text.Trim()
+
         If ddlElection.SelectedValue = "" Then
             ShowMessage("Please select an election.", "warning")
             Return
         End If
-
-        Dim positionTitle As String = txtPositionTitle.Text.Trim()
 
         If positionTitle = "" Then
             ShowMessage("Please enter the position title.", "warning")
@@ -231,12 +318,13 @@ Public Class ManagePositions
         End If
 
         Dim electionID As Integer = Convert.ToInt32(ddlElection.SelectedValue)
-        Dim facultyText As String = "General Position"
-        Dim facultyIDText As String = "NULL"
 
-        If ddlFaculty.SelectedValue <> "" Then
-            facultyText = ddlFaculty.SelectedItem.Text
-            facultyIDText = ddlFaculty.SelectedValue
+        Dim facultyIDValue As Object
+
+        If ddlFaculty.SelectedValue = "" Then
+            facultyIDValue = DBNull.Value
+        Else
+            facultyIDValue = Convert.ToInt32(ddlFaculty.SelectedValue)
         End If
 
         Try
@@ -251,12 +339,7 @@ Public Class ManagePositions
 
                     cmd.Parameters.AddWithValue("@ElectionID", electionID)
                     cmd.Parameters.AddWithValue("@PositionTitle", positionTitle)
-
-                    If ddlFaculty.SelectedValue = "" Then
-                        cmd.Parameters.AddWithValue("@FacultyID", DBNull.Value)
-                    Else
-                        cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(ddlFaculty.SelectedValue))
-                    End If
+                    cmd.Parameters.AddWithValue("@FacultyID", facultyIDValue)
 
                     con.Open()
                     cmd.ExecuteNonQuery()
@@ -269,10 +352,10 @@ Public Class ManagePositions
                 "Add Position",
                 "Added position: " & positionTitle &
                 ", ElectionID: " & electionID.ToString() &
-                ", Faculty: " & facultyText &
-                ", FacultyID: " & facultyIDText
+                ", FacultyID: " & If(facultyIDValue Is DBNull.Value, "General", facultyIDValue.ToString())
             )
 
+            ddlElection.SelectedIndex = 0
             txtPositionTitle.Text = ""
             ddlFaculty.SelectedIndex = 0
 
@@ -298,52 +381,46 @@ Public Class ManagePositions
 
             Dim oldFacultyID As String = ""
 
-            If gvPositions.DataKeys(rowIndex).Values("FacultyID") IsNot Nothing Then
-                oldFacultyID = gvPositions.DataKeys(rowIndex).Values("FacultyID").ToString()
-            End If
+            If gvPositions.DataKeys(rowIndex).Values("FacultyID") IsNot Nothing AndAlso
+               Not IsDBNull(gvPositions.DataKeys(rowIndex).Values("FacultyID")) Then
 
-            If oldFacultyID = "" Then
-                oldFacultyID = "NULL"
+                oldFacultyID = gvPositions.DataKeys(rowIndex).Values("FacultyID").ToString()
+
             End If
 
             Dim row As GridViewRow = gvPositions.Rows(rowIndex)
 
-            Dim txtTitle As TextBox =
+            Dim txtGridPositionTitle As TextBox =
                 TryCast(row.FindControl("txtGridPositionTitle"), TextBox)
 
-            Dim ddlFaculty As DropDownList =
+            Dim ddlGridFaculty As DropDownList =
                 TryCast(row.FindControl("ddlGridFaculty"), DropDownList)
 
-            Dim chk As CheckBox =
+            Dim chkIsActive As CheckBox =
                 TryCast(row.FindControl("chkIsActive"), CheckBox)
 
-            If txtTitle Is Nothing Then
-                ShowMessage("Position title textbox not found.", "error")
+            If txtGridPositionTitle Is Nothing OrElse ddlGridFaculty Is Nothing OrElse chkIsActive Is Nothing Then
+                ShowMessage("One or more position controls were not found.", "error")
                 Return
             End If
 
-            If ddlFaculty Is Nothing Then
-                ShowMessage("Faculty dropdown not found.", "error")
-                Return
-            End If
-
-            If chk Is Nothing Then
-                ShowMessage("Active checkbox not found.", "error")
-                Return
-            End If
-
-            Dim positionTitle As String = txtTitle.Text.Trim()
+            Dim positionTitle As String = txtGridPositionTitle.Text.Trim()
+            Dim isActive As Boolean = chkIsActive.Checked
 
             If positionTitle = "" Then
                 ShowMessage("Position title cannot be empty.", "warning")
                 Return
             End If
 
-            Dim newFacultyIDText As String = "NULL"
-            Dim isActive As Boolean = chk.Checked
+            Dim newFacultyIDValue As Object
+            Dim newFacultyAuditText As String
 
-            If ddlFaculty.SelectedValue <> "" Then
-                newFacultyIDText = ddlFaculty.SelectedValue
+            If ddlGridFaculty.SelectedValue = "" Then
+                newFacultyIDValue = DBNull.Value
+                newFacultyAuditText = "General"
+            Else
+                newFacultyIDValue = Convert.ToInt32(ddlGridFaculty.SelectedValue)
+                newFacultyAuditText = ddlGridFaculty.SelectedValue
             End If
 
             Try
@@ -361,13 +438,7 @@ Public Class ManagePositions
                     Using cmd As New SqlCommand(query, con)
 
                         cmd.Parameters.AddWithValue("@PositionTitle", positionTitle)
-
-                        If ddlFaculty.SelectedValue = "" Then
-                            cmd.Parameters.AddWithValue("@FacultyID", DBNull.Value)
-                        Else
-                            cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(ddlFaculty.SelectedValue))
-                        End If
-
+                        cmd.Parameters.AddWithValue("@FacultyID", newFacultyIDValue)
                         cmd.Parameters.AddWithValue("@IsActive", isActive)
                         cmd.Parameters.AddWithValue("@PositionID", positionID)
 
@@ -382,9 +453,9 @@ Public Class ManagePositions
                     "Update Position",
                     "Updated PositionID: " & positionID.ToString() &
                     ", Title: " & positionTitle &
-                    ", Old FacultyID: " & oldFacultyID &
-                    ", New FacultyID: " & newFacultyIDText &
-                    ", Active = " & isActive.ToString()
+                    ", Old FacultyID: " & If(oldFacultyID = "", "General", oldFacultyID) &
+                    ", New FacultyID: " & newFacultyAuditText &
+                    ", Active: " & isActive.ToString()
                 )
 
                 LoadPositions()
@@ -396,6 +467,38 @@ Public Class ManagePositions
             End Try
 
         End If
+
+    End Sub
+
+    Protected Sub btnApplyFilter_Click(sender As Object, e As EventArgs) Handles btnApplyFilter.Click
+
+        LoadPositions()
+
+    End Sub
+
+    Protected Sub btnClearFilter_Click(sender As Object, e As EventArgs) Handles btnClearFilter.Click
+
+        If ddlElectionFilter.Items.Count > 0 Then
+            ddlElectionFilter.SelectedIndex = 0
+        End If
+
+        txtPositionTitleFilter.Text = ""
+
+        If ddlFacultyFilter.Items.Count > 0 Then
+            ddlFacultyFilter.SelectedIndex = 0
+        End If
+
+        ddlStatusFilter.SelectedValue = ""
+
+        LoadPositions()
+
+    End Sub
+
+    Protected Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
+
+        LoadElections()
+        LoadFaculties()
+        LoadPositions()
 
     End Sub
 

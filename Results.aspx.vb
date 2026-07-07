@@ -1,6 +1,8 @@
 ﻿Imports System.Data
 Imports System.Data.SqlClient
 Imports System.Configuration
+Imports System.Text
+Imports System.Web
 
 Public Class Results
     Inherits System.Web.UI.Page
@@ -86,6 +88,29 @@ Public Class Results
 
     End Sub
 
+    Private Function GetResultsData(electionID As Integer) As DataTable
+
+        Dim dt As New DataTable()
+
+        Using con As New SqlConnection(connectionString)
+
+            Using cmd As New SqlCommand("sp_GetElectionResults", con)
+
+                cmd.CommandType = CommandType.StoredProcedure
+                cmd.Parameters.AddWithValue("@ElectionID", electionID)
+
+                Using da As New SqlDataAdapter(cmd)
+                    da.Fill(dt)
+                End Using
+
+            End Using
+
+        End Using
+
+        Return dt
+
+    End Function
+
     Private Sub LoadResults()
 
         If ddlElections.SelectedValue = "" Then
@@ -97,32 +122,17 @@ Public Class Results
         Dim electionID As Integer = Convert.ToInt32(ddlElections.SelectedValue)
 
         Try
-            Using con As New SqlConnection(connectionString)
+            Dim dt As DataTable = GetResultsData(electionID)
 
-                Using cmd As New SqlCommand("sp_GetElectionResults", con)
+            gvResults.DataSource = dt
+            gvResults.DataBind()
 
-                    cmd.CommandType = CommandType.StoredProcedure
-                    cmd.Parameters.AddWithValue("@ElectionID", electionID)
-
-                    Dim dt As New DataTable()
-
-                    Using da As New SqlDataAdapter(cmd)
-                        da.Fill(dt)
-                    End Using
-
-                    gvResults.DataSource = dt
-                    gvResults.DataBind()
-
-                    If dt.Rows.Count = 0 Then
-                        ShowMessage("No results found for the selected election.", "warning")
-                    Else
-                        pnlMessage.Visible = False
-                        lblMessage.Text = ""
-                    End If
-
-                End Using
-
-            End Using
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No results found for the selected election.", "warning")
+            Else
+                pnlMessage.Visible = False
+                lblMessage.Text = ""
+            End If
 
         Catch ex As Exception
             ShowMessage("Error loading results: " & ex.Message, "error")
@@ -139,6 +149,93 @@ Public Class Results
     Protected Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
 
         LoadResults()
+
+    End Sub
+
+    Protected Sub btnExportExcel_Click(sender As Object, e As EventArgs) Handles btnExportExcel.Click
+
+        If ddlElections.SelectedValue = "" Then
+            ShowMessage("Please select an election before exporting.", "warning")
+            Return
+        End If
+
+        Dim electionID As Integer = Convert.ToInt32(ddlElections.SelectedValue)
+        Dim electionTitle As String = ddlElections.SelectedItem.Text
+
+        Try
+            Dim dt As DataTable = GetResultsData(electionID)
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No results available to export for the selected election.", "warning")
+                Return
+            End If
+
+            ExportResultsToExcel(dt, electionTitle)
+
+        Catch ex As Exception
+            ShowMessage("Error exporting results: " & ex.Message, "error")
+        End Try
+
+    End Sub
+
+    Private Sub ExportResultsToExcel(dt As DataTable, electionTitle As String)
+
+        Dim fileName As String =
+            "Election_Results_" & DateTime.Now.ToString("dd-MM-yyyy_HHmm") & ".xls"
+
+        Dim sb As New StringBuilder()
+
+        sb.Append("<html>")
+        sb.Append("<head>")
+        sb.Append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />")
+        sb.Append("</head>")
+        sb.Append("<body>")
+
+        sb.Append("<h2>Election Results</h2>")
+        sb.Append("<p><b>Election:</b> " & HttpUtility.HtmlEncode(electionTitle) & "</p>")
+        sb.Append("<p><b>Export Date:</b> " & DateTime.Now.ToString("dd-MM-yyyy HH:mm") & "</p>")
+
+        sb.Append("<table border='1'>")
+
+        sb.Append("<tr>")
+        sb.Append("<th>Election</th>")
+        sb.Append("<th>Position</th>")
+        sb.Append("<th>Faculty</th>")
+        sb.Append("<th>Candidate ID</th>")
+        sb.Append("<th>Candidate Name</th>")
+        sb.Append("<th>Major</th>")
+        sb.Append("<th>Year</th>")
+        sb.Append("<th>Total Votes</th>")
+        sb.Append("</tr>")
+
+        For Each row As DataRow In dt.Rows
+
+            sb.Append("<tr>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("ElectionTitle").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("PositionTitle").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("FacultyName").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("CandidateID").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("FullName").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("Major").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("YearLevel").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("TotalVotes").ToString()) & "</td>")
+            sb.Append("</tr>")
+
+        Next
+
+        sb.Append("</table>")
+        sb.Append("</body>")
+        sb.Append("</html>")
+
+        Response.Clear()
+        Response.Buffer = True
+        Response.ContentType = "application/vnd.ms-excel"
+        Response.AddHeader("Content-Disposition", "attachment;filename=" & fileName)
+        Response.Charset = "utf-8"
+        Response.ContentEncoding = Encoding.UTF8
+        Response.Write(sb.ToString())
+        Response.Flush()
+        Response.End()
 
     End Sub
 

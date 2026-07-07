@@ -43,6 +43,9 @@ Public Class ManageFaculties
 
     Private Sub LoadFaculties()
 
+        Dim facultyNameFilter As String = txtFacultyNameFilter.Text.Trim()
+        Dim statusFilter As String = ddlStatusFilter.SelectedValue
+
         Try
             Using con As New SqlConnection(connectionString)
 
@@ -52,10 +55,34 @@ Public Class ManageFaculties
                         FacultyName,
                         IsActive
                     FROM Faculties
+                    WHERE 1 = 1
+                "
+
+                If facultyNameFilter <> "" Then
+                    query &= "
+                        AND FacultyName LIKE @FacultyName
+                    "
+                End If
+
+                If statusFilter <> "" Then
+                    query &= "
+                        AND IsActive = @IsActive
+                    "
+                End If
+
+                query &= "
                     ORDER BY FacultyName
                 "
 
                 Using cmd As New SqlCommand(query, con)
+
+                    If facultyNameFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@FacultyName", "%" & facultyNameFilter & "%")
+                    End If
+
+                    If statusFilter <> "" Then
+                        cmd.Parameters.AddWithValue("@IsActive", Convert.ToBoolean(Convert.ToInt32(statusFilter)))
+                    End If
 
                     Dim dt As New DataTable()
 
@@ -65,6 +92,13 @@ Public Class ManageFaculties
 
                     gvFaculties.DataSource = dt
                     gvFaculties.DataBind()
+
+                    If dt.Rows.Count = 0 Then
+                        ShowMessage("No faculties found for the selected filter.", "warning")
+                    Else
+                        pnlMessage.Visible = False
+                        lblMessage.Text = ""
+                    End If
 
                 End Using
 
@@ -100,9 +134,9 @@ Public Class ManageFaculties
 
                     checkCmd.Parameters.AddWithValue("@FacultyName", facultyName)
 
-                    Dim exists As Integer = Convert.ToInt32(checkCmd.ExecuteScalar())
+                    Dim count As Integer = Convert.ToInt32(checkCmd.ExecuteScalar())
 
-                    If exists > 0 Then
+                    If count > 0 Then
                         ShowMessage("This faculty already exists.", "warning")
                         Return
                     End If
@@ -114,10 +148,10 @@ Public Class ManageFaculties
                     VALUES (@FacultyName, 1)
                 "
 
-                Using cmd As New SqlCommand(insertQuery, con)
+                Using insertCmd As New SqlCommand(insertQuery, con)
 
-                    cmd.Parameters.AddWithValue("@FacultyName", facultyName)
-                    cmd.ExecuteNonQuery()
+                    insertCmd.Parameters.AddWithValue("@FacultyName", facultyName)
+                    insertCmd.ExecuteNonQuery()
 
                 End Using
 
@@ -129,6 +163,7 @@ Public Class ManageFaculties
             )
 
             txtFacultyName.Text = ""
+
             LoadFaculties()
 
             ShowMessage("Faculty added successfully.", "success")
@@ -141,35 +176,76 @@ Public Class ManageFaculties
 
     Protected Sub gvFaculties_RowCommand(sender As Object, e As GridViewCommandEventArgs) Handles gvFaculties.RowCommand
 
-        If e.CommandName = "UpdateActive" Then
+        If e.CommandName = "UpdateFaculty" Then
 
-            Dim rowIndex As Integer = Convert.ToInt32(e.CommandArgument)
-            Dim facultyID As Integer = Convert.ToInt32(gvFaculties.DataKeys(rowIndex).Value)
+            Dim rowIndex As Integer =
+                Convert.ToInt32(e.CommandArgument)
+
+            Dim facultyID As Integer =
+                Convert.ToInt32(gvFaculties.DataKeys(rowIndex).Value)
 
             Dim row As GridViewRow = gvFaculties.Rows(rowIndex)
-            Dim chk As CheckBox = TryCast(row.FindControl("chkIsActive"), CheckBox)
 
-            If chk Is Nothing Then
-                ShowMessage("Active checkbox not found.", "error")
+            Dim txtGridFacultyName As TextBox =
+                TryCast(row.FindControl("txtGridFacultyName"), TextBox)
+
+            Dim chkIsActive As CheckBox =
+                TryCast(row.FindControl("chkIsActive"), CheckBox)
+
+            If txtGridFacultyName Is Nothing OrElse chkIsActive Is Nothing Then
+                ShowMessage("One or more faculty controls were not found.", "error")
+                Return
+            End If
+
+            Dim facultyName As String = txtGridFacultyName.Text.Trim()
+            Dim isActive As Boolean = chkIsActive.Checked
+
+            If facultyName = "" Then
+                ShowMessage("Faculty name cannot be empty.", "warning")
                 Return
             End If
 
             Try
                 Using con As New SqlConnection(connectionString)
 
-                    Dim query As String = "
+                    con.Open()
+
+                    Dim checkQuery As String = "
+                        SELECT COUNT(*)
+                        FROM Faculties
+                        WHERE FacultyName = @FacultyName
+                        AND FacultyID <> @FacultyID
+                    "
+
+                    Using checkCmd As New SqlCommand(checkQuery, con)
+
+                        checkCmd.Parameters.AddWithValue("@FacultyName", facultyName)
+                        checkCmd.Parameters.AddWithValue("@FacultyID", facultyID)
+
+                        Dim count As Integer = Convert.ToInt32(checkCmd.ExecuteScalar())
+
+                        If count > 0 Then
+                            ShowMessage("Another faculty with this name already exists.", "warning")
+                            Return
+                        End If
+
+                    End Using
+
+                    Dim updateQuery As String = "
                         UPDATE Faculties
-                        SET IsActive = @IsActive
+                        SET 
+                            FacultyName = @FacultyName,
+                            IsActive = @IsActive
                         WHERE FacultyID = @FacultyID
                     "
 
-                    Using cmd As New SqlCommand(query, con)
+                    Using updateCmd As New SqlCommand(updateQuery, con)
 
-                        cmd.Parameters.AddWithValue("@IsActive", chk.Checked)
-                        cmd.Parameters.AddWithValue("@FacultyID", facultyID)
+                        updateCmd.Parameters.AddWithValue("@FacultyName", facultyName)
+                        updateCmd.Parameters.AddWithValue("@IsActive", isActive)
+                        updateCmd.Parameters.AddWithValue("@FacultyID", facultyID)
 
-                        con.Open()
-                        cmd.ExecuteNonQuery()
+                        updateCmd.ExecuteNonQuery()
 
                     End Using
 
@@ -178,7 +254,8 @@ Public Class ManageFaculties
                 AddAuditLog(
                     "Update Faculty",
                     "Updated FacultyID: " & facultyID.ToString() &
-                    ", Active = " & chk.Checked.ToString()
+                    ", Name: " & facultyName &
+                    ", Active: " & isActive.ToString()
                 )
 
                 LoadFaculties()
@@ -190,6 +267,27 @@ Public Class ManageFaculties
             End Try
 
         End If
+
+    End Sub
+
+    Protected Sub btnApplyFilter_Click(sender As Object, e As EventArgs) Handles btnApplyFilter.Click
+
+        LoadFaculties()
+
+    End Sub
+
+    Protected Sub btnClearFilter_Click(sender As Object, e As EventArgs) Handles btnClearFilter.Click
+
+        txtFacultyNameFilter.Text = ""
+        ddlStatusFilter.SelectedValue = ""
+
+        LoadFaculties()
+
+    End Sub
+
+    Protected Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
+
+        LoadFaculties()
 
     End Sub
 
@@ -244,13 +342,17 @@ Public Class ManageFaculties
     End Sub
 
     Protected Sub btnBack_Click(sender As Object, e As EventArgs) Handles btnBack.Click
+
         Response.Redirect("AdminDashboard.aspx")
+
     End Sub
 
     Protected Sub btnLogout_Click(sender As Object, e As EventArgs) Handles btnLogout.Click
+
         Session.Clear()
         Session.Abandon()
         Response.Redirect("Login.aspx")
+
     End Sub
 
 End Class

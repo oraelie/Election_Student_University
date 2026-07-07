@@ -73,6 +73,7 @@
 	border-left-color: #dc2626;
 }
 
+/* Election filter */
 .filter-box {
 	background-color: #f9fafb;
 	border: 1px solid #e5e7eb;
@@ -105,6 +106,7 @@
 		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.15);
 	}
 
+/* Results table */
 .results-table {
 	width: 100%;
 	border-collapse: collapse;
@@ -129,6 +131,7 @@
 		background-color: #f9fafb;
 	}
 
+/* Buttons */
 .button-area {
 	text-align: center;
 	margin-top: 25px;
@@ -148,10 +151,26 @@
 	cursor: pointer;
 	border-radius: 5px;
 	font-weight: bold;
+	margin-right: 8px;
 }
 
 	.main-button:hover {
 		background-color: #374151;
+	}
+
+.export-button {
+	padding: 11px 20px;
+	background-color: #047857;
+	color: white;
+	border: none;
+	cursor: pointer;
+	border-radius: 5px;
+	font-weight: bold;
+	margin-left: 8px;
+}
+
+	.export-button:hover {
+		background-color: #059669;
 	}
 
 .back-button {
@@ -183,6 +202,7 @@
 		background-color: #dc2626;
 	}
 
+/* Responsive */
 @media screen and (max-width: 950px) {
 	.results-container {
 		width: 95%;
@@ -203,8 +223,10 @@
 
 	.back-button,
 	.logout-button,
-	.main-button {
+	.main-button,
+	.export-button {
 		width: 100%;
 		margin-right: 0;
+		margin-left: 0;
 	}
 }
