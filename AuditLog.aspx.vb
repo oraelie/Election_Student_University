@@ -2,6 +2,8 @@
 Imports System.Data.SqlClient
 Imports System.Configuration
 Imports System.Globalization
+Imports System.Text
+Imports System.Web
 
 Public Class AuditLog
     Inherits System.Web.UI.Page
@@ -81,7 +83,7 @@ Public Class AuditLog
 
     End Sub
 
-    Private Sub LoadAuditLog()
+    Private Function GetAuditLogData() As DataTable
 
         Dim usernameFilter As String = txtUsernameFilter.Text.Trim()
         Dim actionTypeFilter As String = ddlActionType.SelectedValue
@@ -101,8 +103,7 @@ Public Class AuditLog
                 DateTimeStyles.None,
                 fromDate
             ) Then
-                ShowMessage("Invalid From Date. Use format: 07-07-2026", "warning")
-                Return
+                Throw New ApplicationException("Invalid From Date. Use format: 07-07-2026")
             End If
 
             hasFromDate = True
@@ -118,8 +119,7 @@ Public Class AuditLog
                 DateTimeStyles.None,
                 toDate
             ) Then
-                ShowMessage("Invalid To Date. Use format: 10-07-2026", "warning")
-                Return
+                Throw New ApplicationException("Invalid To Date. Use format: 10-07-2026")
             End If
 
             toDate = toDate.Date.AddDays(1).AddSeconds(-1)
@@ -128,89 +128,99 @@ Public Class AuditLog
         End If
 
         If hasFromDate AndAlso hasToDate AndAlso toDate < fromDate Then
-            ShowMessage("To Date must be after From Date.", "warning")
-            Return
+            Throw New ApplicationException("To Date must be after From Date.")
         End If
 
-        Try
-            Using con As New SqlConnection(connectionString)
+        Dim dt As New DataTable()
 
-                Dim query As String = "
-                    SELECT 
-                        LogID,
-                        ADUsername,
-                        ActionType,
-                        ActionDetails,
-                        FORMAT(ActionDateTime, 'dd-MM-yyyy HH:mm') AS ActionDateTimeFormatted
-                    FROM AuditLog
-                    WHERE 1 = 1
+        Using con As New SqlConnection(connectionString)
+
+            Dim query As String = "
+                SELECT 
+                    LogID,
+                    ADUsername,
+                    ActionType,
+                    ActionDetails,
+                    FORMAT(ActionDateTime, 'dd-MM-yyyy HH:mm') AS ActionDateTimeFormatted
+                FROM AuditLog
+                WHERE 1 = 1
+            "
+
+            If usernameFilter <> "" Then
+                query &= "
+                    AND ADUsername LIKE @ADUsername
                 "
+            End If
+
+            If actionTypeFilter <> "" Then
+                query &= "
+                    AND ActionType = @ActionType
+                "
+            End If
+
+            If hasFromDate Then
+                query &= "
+                    AND ActionDateTime >= @FromDate
+                "
+            End If
+
+            If hasToDate Then
+                query &= "
+                    AND ActionDateTime <= @ToDate
+                "
+            End If
+
+            query &= "
+                ORDER BY LogID DESC
+            "
+
+            Using cmd As New SqlCommand(query, con)
 
                 If usernameFilter <> "" Then
-                    query &= "
-                        AND ADUsername LIKE @ADUsername
-                    "
+                    cmd.Parameters.AddWithValue("@ADUsername", "%" & usernameFilter & "%")
                 End If
 
                 If actionTypeFilter <> "" Then
-                    query &= "
-                        AND ActionType = @ActionType
-                    "
+                    cmd.Parameters.AddWithValue("@ActionType", actionTypeFilter)
                 End If
 
                 If hasFromDate Then
-                    query &= "
-                        AND ActionDateTime >= @FromDate
-                    "
+                    cmd.Parameters.AddWithValue("@FromDate", fromDate)
                 End If
 
                 If hasToDate Then
-                    query &= "
-                        AND ActionDateTime <= @ToDate
-                    "
+                    cmd.Parameters.AddWithValue("@ToDate", toDate)
                 End If
 
-                query &= "
-                    ORDER BY LogID DESC
-                "
-
-                Using cmd As New SqlCommand(query, con)
-
-                    If usernameFilter <> "" Then
-                        cmd.Parameters.AddWithValue("@ADUsername", "%" & usernameFilter & "%")
-                    End If
-
-                    If actionTypeFilter <> "" Then
-                        cmd.Parameters.AddWithValue("@ActionType", actionTypeFilter)
-                    End If
-
-                    If hasFromDate Then
-                        cmd.Parameters.AddWithValue("@FromDate", fromDate)
-                    End If
-
-                    If hasToDate Then
-                        cmd.Parameters.AddWithValue("@ToDate", toDate)
-                    End If
-
-                    Dim dt As New DataTable()
-
-                    Using da As New SqlDataAdapter(cmd)
-                        da.Fill(dt)
-                    End Using
-
-                    gvAuditLog.DataSource = dt
-                    gvAuditLog.DataBind()
-
-                    If dt.Rows.Count = 0 Then
-                        ShowMessage("No audit log records found for the selected filter.", "warning")
-                    Else
-                        pnlMessage.Visible = False
-                        lblMessage.Text = ""
-                    End If
-
+                Using da As New SqlDataAdapter(cmd)
+                    da.Fill(dt)
                 End Using
 
             End Using
+
+        End Using
+
+        Return dt
+
+    End Function
+
+    Private Sub LoadAuditLog()
+
+        Try
+            Dim dt As DataTable = GetAuditLogData()
+
+            gvAuditLog.DataSource = dt
+            gvAuditLog.DataBind()
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No audit log records found for the selected filter.", "warning")
+            Else
+                pnlMessage.Visible = False
+                lblMessage.Text = ""
+            End If
+
+        Catch ex As ApplicationException
+            ShowMessage(ex.Message, "warning")
 
         Catch ex As Exception
             ShowMessage("Error loading audit log: " & ex.Message, "error")
@@ -242,6 +252,86 @@ Public Class AuditLog
 
         LoadActionTypes()
         LoadAuditLog()
+
+    End Sub
+
+    Protected Sub btnExportExcel_Click(sender As Object, e As EventArgs) Handles btnExportExcel.Click
+
+        Try
+            Dim dt As DataTable = GetAuditLogData()
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No audit log records available to export for the selected filter.", "warning")
+                Return
+            End If
+
+            ExportAuditLogToExcel(dt)
+
+        Catch ex As ApplicationException
+            ShowMessage(ex.Message, "warning")
+
+        Catch ex As Exception
+            ShowMessage("Error exporting audit log: " & ex.Message, "error")
+        End Try
+
+    End Sub
+
+    Private Sub ExportAuditLogToExcel(dt As DataTable)
+
+        Dim fileName As String =
+            "Audit_Log_" & DateTime.Now.ToString("dd-MM-yyyy_HHmm") & ".xls"
+
+        Dim sb As New StringBuilder()
+
+        sb.Append("<html>")
+        sb.Append("<head>")
+        sb.Append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />")
+        sb.Append("</head>")
+        sb.Append("<body>")
+
+        sb.Append("<h2>Audit Log</h2>")
+        sb.Append("<p><b>Export Date:</b> " & DateTime.Now.ToString("dd-MM-yyyy HH:mm") & "</p>")
+
+        sb.Append("<p><b>Username Filter:</b> " & HttpUtility.HtmlEncode(txtUsernameFilter.Text.Trim()) & "</p>")
+        sb.Append("<p><b>Action Type Filter:</b> " & HttpUtility.HtmlEncode(ddlActionType.SelectedItem.Text) & "</p>")
+        sb.Append("<p><b>From Date:</b> " & HttpUtility.HtmlEncode(txtFromDate.Text.Trim()) & "</p>")
+        sb.Append("<p><b>To Date:</b> " & HttpUtility.HtmlEncode(txtToDate.Text.Trim()) & "</p>")
+
+        sb.Append("<table border='1'>")
+
+        sb.Append("<tr>")
+        sb.Append("<th>ID</th>")
+        sb.Append("<th>Username</th>")
+        sb.Append("<th>Action Type</th>")
+        sb.Append("<th>Details</th>")
+        sb.Append("<th>Date / Time</th>")
+        sb.Append("</tr>")
+
+        For Each row As DataRow In dt.Rows
+
+            sb.Append("<tr>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("LogID").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("ADUsername").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("ActionType").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("ActionDetails").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("ActionDateTimeFormatted").ToString()) & "</td>")
+            sb.Append("</tr>")
+
+        Next
+
+        sb.Append("</table>")
+        sb.Append("</body>")
+        sb.Append("</html>")
+
+        Response.Clear()
+        Response.Buffer = True
+        Response.ContentType = "application/vnd.ms-excel"
+        Response.AddHeader("Content-Disposition", "attachment;filename=" & fileName)
+        Response.Charset = "utf-8"
+        Response.ContentEncoding = Encoding.UTF8
+        Response.Write(sb.ToString())
+        Response.Flush()
+        Response.End()
 
     End Sub
 

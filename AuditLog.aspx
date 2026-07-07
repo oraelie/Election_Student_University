@@ -88,6 +88,12 @@
                         runat="server" 
                         Text="Clear Filter" 
                         CssClass="clear-button" />
+
+                    <asp:Button 
+                        ID="btnExportExcel" 
+                        runat="server" 
+                        Text="Export to Excel" 
+                        CssClass="export-button" />
                 </div>
 
             </div>
