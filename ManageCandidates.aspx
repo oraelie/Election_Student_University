@@ -5,7 +5,7 @@
 <html>
 <head runat="server">
     <title>Manage Candidates</title>
-    <link href="Css/ManageCandidates.css" rel="stylesheet" type="text/css" />
+    <link href="Css/ManageCandidates.css?v=4" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
@@ -27,6 +27,14 @@
 
             <div class="form-box">
                 <h3>Add Candidate</h3>
+
+                <label>Candidate Username / Student ID</label>
+                <asp:TextBox 
+                    ID="txtCandidateADUsername" 
+                    runat="server" 
+                    CssClass="input-box"
+                    placeholder="Example: 202400699">
+                </asp:TextBox>
 
                 <label>Full Name</label>
                 <asp:TextBox 
@@ -177,7 +185,7 @@
                 AutoGenerateColumns="False"
                 CssClass="data-table"
                 GridLines="None"
-                DataKeyNames="CandidateID,FacultyID"
+                DataKeyNames="CandidateID,FacultyID,PositionID"
                 EmptyDataText="No candidates found.">
 
                 <Columns>
@@ -185,6 +193,17 @@
                     <asp:BoundField DataField="CandidateID" HeaderText="ID" ReadOnly="True" />
                     <asp:BoundField DataField="ElectionTitle" HeaderText="Election" ReadOnly="True" />
                     <asp:BoundField DataField="PositionTitle" HeaderText="Position" ReadOnly="True" />
+
+                    <asp:TemplateField HeaderText="Username / Student ID">
+                        <ItemTemplate>
+                            <asp:TextBox 
+                                ID="txtGridCandidateADUsername" 
+                                runat="server" 
+                                CssClass="grid-username-input"
+                                Text='<%# Eval("CandidateADUsername") %>'>
+                            </asp:TextBox>
+                        </ItemTemplate>
+                    </asp:TemplateField>
 
                     <asp:TemplateField HeaderText="Full Name">
                         <ItemTemplate>

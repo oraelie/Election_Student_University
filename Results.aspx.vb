@@ -33,12 +33,14 @@ Public Class Results
             fullName = adUsername
         End If
 
-        lblFullName.Text = "Admin: " & fullName
+        lblAdminName.Text = "Admin: " & fullName
         lblUsername.Text = "Username: " & adUsername
 
         If Not IsPostBack Then
             pnlMessage.Visible = False
             LoadElections()
+            LoadFaculties()
+            LoadPositionsFilter()
             LoadResults()
         End If
 
@@ -66,17 +68,18 @@ Public Class Results
                     End Using
 
                     ddlElections.Items.Clear()
+                    ddlElections.Items.Add(New ListItem("Select Election", ""))
 
-                    If dt.Rows.Count = 0 Then
-                        ddlElections.Items.Add(New ListItem("No elections available", ""))
-                        ShowMessage("No elections found.", "warning")
-                        Return
-                    End If
+                    For Each row As DataRow In dt.Rows
 
-                    ddlElections.DataSource = dt
-                    ddlElections.DataTextField = "ElectionTitle"
-                    ddlElections.DataValueField = "ElectionID"
-                    ddlElections.DataBind()
+                        ddlElections.Items.Add(
+                            New ListItem(
+                                row("ElectionTitle").ToString(),
+                                row("ElectionID").ToString()
+                            )
+                        )
+
+                    Next
 
                 End Using
 
@@ -88,9 +91,127 @@ Public Class Results
 
     End Sub
 
-    Private Function GetResultsData(electionID As Integer) As DataTable
+    Private Sub LoadFaculties()
+
+        Try
+            Using con As New SqlConnection(connectionString)
+
+                Dim query As String = "
+                    SELECT 
+                        FacultyID,
+                        FacultyName
+                    FROM Faculties
+                    ORDER BY FacultyName
+                "
+
+                Using cmd As New SqlCommand(query, con)
+
+                    Dim dt As New DataTable()
+
+                    Using da As New SqlDataAdapter(cmd)
+                        da.Fill(dt)
+                    End Using
+
+                    ddlFacultyFilter.Items.Clear()
+                    ddlFacultyFilter.Items.Add(New ListItem("All Faculties", ""))
+
+                    For Each row As DataRow In dt.Rows
+
+                        ddlFacultyFilter.Items.Add(
+                            New ListItem(
+                                row("FacultyName").ToString(),
+                                row("FacultyID").ToString()
+                            )
+                        )
+
+                    Next
+
+                End Using
+
+            End Using
+
+        Catch ex As Exception
+            ShowMessage("Error loading faculties: " & ex.Message, "error")
+        End Try
+
+    End Sub
+
+    Private Sub LoadPositionsFilter()
+
+        Try
+            ddlPositionFilter.Items.Clear()
+            ddlPositionFilter.Items.Add(New ListItem("All Positions", ""))
+
+            If ddlElections.SelectedValue = "" Then
+                Return
+            End If
+
+            Using con As New SqlConnection(connectionString)
+
+                Dim query As String = "
+                    SELECT DISTINCT
+                        P.PositionID,
+                        P.PositionTitle
+                    FROM Positions P
+                    INNER JOIN Candidates C
+                        ON C.PositionID = P.PositionID
+                    WHERE P.ElectionID = @ElectionID
+                "
+
+                If ddlFacultyFilter.SelectedValue <> "" Then
+                    query &= "
+                        AND C.FacultyID = @FacultyID
+                    "
+                End If
+
+                query &= "
+                    ORDER BY P.PositionTitle
+                "
+
+                Using cmd As New SqlCommand(query, con)
+
+                    cmd.Parameters.AddWithValue("@ElectionID", Convert.ToInt32(ddlElections.SelectedValue))
+
+                    If ddlFacultyFilter.SelectedValue <> "" Then
+                        cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(ddlFacultyFilter.SelectedValue))
+                    End If
+
+                    Dim dt As New DataTable()
+
+                    Using da As New SqlDataAdapter(cmd)
+                        da.Fill(dt)
+                    End Using
+
+                    For Each row As DataRow In dt.Rows
+
+                        ddlPositionFilter.Items.Add(
+                            New ListItem(
+                                row("PositionTitle").ToString(),
+                                row("PositionID").ToString()
+                            )
+                        )
+
+                    Next
+
+                End Using
+
+            End Using
+
+        Catch ex As Exception
+            ShowMessage("Error loading positions filter: " & ex.Message, "error")
+        End Try
+
+    End Sub
+
+    Private Function GetResultsData() As DataTable
 
         Dim dt As New DataTable()
+
+        If ddlElections.SelectedValue = "" Then
+            Return dt
+        End If
+
+        Dim electionID As Integer = Convert.ToInt32(ddlElections.SelectedValue)
 
         Using con As New SqlConnection(connectionString)
 
@@ -98,6 +219,18 @@ Public Class Results
 
                 cmd.CommandType = CommandType.StoredProcedure
                 cmd.Parameters.AddWithValue("@ElectionID", electionID)
+
+                If ddlFacultyFilter.SelectedValue = "" Then
+                    cmd.Parameters.AddWithValue("@FacultyID", DBNull.Value)
+                Else
+                    cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(ddlFacultyFilter.SelectedValue))
+                End If
+
+                If ddlPositionFilter.SelectedValue = "" Then
+                    cmd.Parameters.AddWithValue("@PositionID", DBNull.Value)
+                Else
+                    cmd.Parameters.AddWithValue("@PositionID", Convert.ToInt32(ddlPositionFilter.SelectedValue))
+                End If
 
                 Using da As New SqlDataAdapter(cmd)
                     da.Fill(dt)
@@ -113,22 +246,19 @@ Public Class Results
 
     Private Sub LoadResults()
 
-        If ddlElections.SelectedValue = "" Then
-            gvResults.DataSource = Nothing
-            gvResults.DataBind()
-            Return
-        End If
-
-        Dim electionID As Integer = Convert.ToInt32(ddlElections.SelectedValue)
-
         Try
-            Dim dt As DataTable = GetResultsData(electionID)
+            Dim dt As DataTable = GetResultsData()
 
             gvResults.DataSource = dt
             gvResults.DataBind()
 
+            If ddlElections.SelectedValue = "" Then
+                ShowMessage("Please select an election to view results.", "warning")
+                Return
+            End If
+
             If dt.Rows.Count = 0 Then
-                ShowMessage("No results found for the selected election.", "warning")
+                ShowMessage("No results found for the selected election, faculty, and position.", "warning")
             Else
                 pnlMessage.Visible = False
                 lblMessage.Text = ""
@@ -142,35 +272,47 @@ Public Class Results
 
     Protected Sub ddlElections_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ddlElections.SelectedIndexChanged
 
+        LoadPositionsFilter()
+        LoadResults()
+
+    End Sub
+
+    Protected Sub ddlFacultyFilter_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ddlFacultyFilter.SelectedIndexChanged
+
+        LoadPositionsFilter()
+        LoadResults()
+
+    End Sub
+
+    Protected Sub ddlPositionFilter_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ddlPositionFilter.SelectedIndexChanged
+
         LoadResults()
 
     End Sub
 
     Protected Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
 
+        LoadPositionsFilter()
         LoadResults()
 
     End Sub
 
     Protected Sub btnExportExcel_Click(sender As Object, e As EventArgs) Handles btnExportExcel.Click
 
-        If ddlElections.SelectedValue = "" Then
-            ShowMessage("Please select an election before exporting.", "warning")
-            Return
-        End If
-
-        Dim electionID As Integer = Convert.ToInt32(ddlElections.SelectedValue)
-        Dim electionTitle As String = ddlElections.SelectedItem.Text
-
         Try
-            Dim dt As DataTable = GetResultsData(electionID)
+            Dim dt As DataTable = GetResultsData()
 
-            If dt.Rows.Count = 0 Then
-                ShowMessage("No results available to export for the selected election.", "warning")
+            If ddlElections.SelectedValue = "" Then
+                ShowMessage("Please select an election before exporting.", "warning")
                 Return
             End If
 
-            ExportResultsToExcel(dt, electionTitle)
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No results available to export for the selected election, faculty, and position.", "warning")
+                Return
+            End If
+
+            ExportResultsToExcel(dt)
 
         Catch ex As Exception
             ShowMessage("Error exporting results: " & ex.Message, "error")
@@ -178,7 +320,11 @@ Public Class Results
 
     End Sub
 
-    Private Sub ExportResultsToExcel(dt As DataTable, electionTitle As String)
+    Private Sub ExportResultsToExcel(dt As DataTable)
+
+        Dim electionTitle As String = ddlElections.SelectedItem.Text
+        Dim facultyTitle As String = ddlFacultyFilter.SelectedItem.Text
+        Dim positionTitle As String = ddlPositionFilter.SelectedItem.Text
 
         Dim fileName As String =
             "Election_Results_" & DateTime.Now.ToString("dd-MM-yyyy_HHmm") & ".xls"
@@ -192,8 +338,10 @@ Public Class Results
         sb.Append("<body>")
 
         sb.Append("<h2>Election Results</h2>")
-        sb.Append("<p><b>Election:</b> " & HttpUtility.HtmlEncode(electionTitle) & "</p>")
         sb.Append("<p><b>Export Date:</b> " & DateTime.Now.ToString("dd-MM-yyyy HH:mm") & "</p>")
+        sb.Append("<p><b>Election:</b> " & HttpUtility.HtmlEncode(electionTitle) & "</p>")
+        sb.Append("<p><b>Faculty:</b> " & HttpUtility.HtmlEncode(facultyTitle) & "</p>")
+        sb.Append("<p><b>Position:</b> " & HttpUtility.HtmlEncode(positionTitle) & "</p>")
 
         sb.Append("<table border='1'>")
 
@@ -204,7 +352,7 @@ Public Class Results
         sb.Append("<th>Candidate ID</th>")
         sb.Append("<th>Candidate Name</th>")
         sb.Append("<th>Major</th>")
-        sb.Append("<th>Year</th>")
+        sb.Append("<th>Year Level</th>")
         sb.Append("<th>Total Votes</th>")
         sb.Append("</tr>")
 

@@ -270,6 +270,7 @@ Public Class ManageCandidates
             Dim query As String = "
                 SELECT 
                     C.CandidateID,
+                    C.CandidateADUsername,
                     C.FullName,
                     C.PositionID,
                     P.PositionTitle,
@@ -297,7 +298,10 @@ Public Class ManageCandidates
 
             If candidateNameFilter <> "" Then
                 query &= "
-                    AND C.FullName LIKE @FullName
+                    AND (
+                        C.FullName LIKE @FullName
+                        OR C.CandidateADUsername LIKE @FullName
+                    )
                 "
             End If
 
@@ -425,11 +429,86 @@ Public Class ManageCandidates
 
     End Sub
 
+    Private Function EligibleVoterIsActive(candidateADUsername As String) As Boolean
+
+        Using con As New SqlConnection(connectionString)
+
+            Dim query As String = "
+                SELECT COUNT(*)
+                FROM EligibleVoters
+                WHERE ADUsername = @ADUsername
+                AND IsActive = 1
+            "
+
+            Using cmd As New SqlCommand(query, con)
+
+                cmd.Parameters.AddWithValue("@ADUsername", candidateADUsername)
+
+                con.Open()
+
+                Dim count As Integer = Convert.ToInt32(cmd.ExecuteScalar())
+
+                Return count > 0
+
+            End Using
+
+        End Using
+
+    End Function
+
+    Private Function CandidateUsernameAlreadyExists(
+        candidateADUsername As String,
+        positionID As Integer,
+        excludeCandidateID As Integer
+    ) As Boolean
+
+        Using con As New SqlConnection(connectionString)
+
+            Dim query As String = "
+                SELECT COUNT(*)
+                FROM Candidates
+                WHERE PositionID = @PositionID
+                AND LOWER(LTRIM(RTRIM(CandidateADUsername))) = LOWER(LTRIM(RTRIM(@CandidateADUsername)))
+            "
+
+            If excludeCandidateID > 0 Then
+                query &= "
+                    AND CandidateID <> @ExcludeCandidateID
+                "
+            End If
+
+            Using cmd As New SqlCommand(query, con)
+
+                cmd.Parameters.AddWithValue("@PositionID", positionID)
+                cmd.Parameters.AddWithValue("@CandidateADUsername", candidateADUsername)
+
+                If excludeCandidateID > 0 Then
+                    cmd.Parameters.AddWithValue("@ExcludeCandidateID", excludeCandidateID)
+                End If
+
+                con.Open()
+
+                Dim count As Integer = Convert.ToInt32(cmd.ExecuteScalar())
+
+                Return count > 0
+
+            End Using
+
+        End Using
+
+    End Function
+
     Protected Sub btnAddCandidate_Click(sender As Object, e As EventArgs) Handles btnAddCandidate.Click
 
+        Dim candidateADUsername As String = txtCandidateADUsername.Text.Trim()
         Dim fullName As String = txtFullName.Text.Trim()
         Dim major As String = txtMajor.Text.Trim()
         Dim description As String = txtDescription.Text.Trim()
+
+        If candidateADUsername = "" Then
+            ShowMessage("Please enter the candidate username / student ID.", "warning")
+            Return
+        End If
 
         If fullName = "" Then
             ShowMessage("Please enter the candidate full name.", "warning")
@@ -443,6 +522,11 @@ Public Class ManageCandidates
 
         If ddlFaculty.SelectedValue = "" Then
             ShowMessage("Please select a faculty.", "warning")
+            Return
+        End If
+
+        If Not EligibleVoterIsActive(candidateADUsername) Then
+            ShowMessage("This username/student ID does not exist as an active eligible voter.", "warning")
             Return
         End If
 
@@ -461,17 +545,23 @@ Public Class ManageCandidates
         Dim facultyID As Integer = Convert.ToInt32(ddlFaculty.SelectedValue)
 
         Try
+            If CandidateUsernameAlreadyExists(candidateADUsername, positionID, 0) Then
+                ShowMessage("This username/student ID is already a candidate for the selected position.", "warning")
+                Return
+            End If
+
             Using con As New SqlConnection(connectionString)
 
                 Dim query As String = "
                     INSERT INTO Candidates 
-                        (FullName, PositionID, FacultyID, Major, YearLevel, Description, IsActive)
+                        (CandidateADUsername, FullName, PositionID, FacultyID, Major, YearLevel, Description, IsActive)
                     VALUES 
-                        (@FullName, @PositionID, @FacultyID, @Major, @YearLevel, @Description, 1)
+                        (@CandidateADUsername, @FullName, @PositionID, @FacultyID, @Major, @YearLevel, @Description, 1)
                 "
 
                 Using cmd As New SqlCommand(query, con)
 
+                    cmd.Parameters.AddWithValue("@CandidateADUsername", candidateADUsername)
                     cmd.Parameters.AddWithValue("@FullName", fullName)
                     cmd.Parameters.AddWithValue("@PositionID", positionID)
                     cmd.Parameters.AddWithValue("@FacultyID", facultyID)
@@ -488,11 +578,13 @@ Public Class ManageCandidates
 
             AddAuditLog(
                 "Add Candidate",
-                "Added candidate: " & fullName &
+                "Added candidate username: " & candidateADUsername &
+                ", Name: " & fullName &
                 ", PositionID: " & positionID.ToString() &
                 ", FacultyID: " & facultyID.ToString()
             )
 
+            txtCandidateADUsername.Text = ""
             txtFullName.Text = ""
             txtMajor.Text = ""
             txtYearLevel.Text = ""
@@ -521,10 +613,16 @@ Public Class ManageCandidates
             Dim candidateID As Integer =
                 Convert.ToInt32(gvCandidates.DataKeys(rowIndex).Values("CandidateID"))
 
+            Dim positionID As Integer =
+                Convert.ToInt32(gvCandidates.DataKeys(rowIndex).Values("PositionID"))
+
             Dim oldFacultyID As String =
                 gvCandidates.DataKeys(rowIndex).Values("FacultyID").ToString()
 
             Dim row As GridViewRow = gvCandidates.Rows(rowIndex)
+
+            Dim txtGridCandidateADUsername As TextBox =
+                TryCast(row.FindControl("txtGridCandidateADUsername"), TextBox)
 
             Dim txtGridFullName As TextBox =
                 TryCast(row.FindControl("txtGridFullName"), TextBox)
@@ -544,22 +642,33 @@ Public Class ManageCandidates
             Dim chkIsActive As CheckBox =
                 TryCast(row.FindControl("chkIsActive"), CheckBox)
 
-            If txtGridFullName Is Nothing OrElse ddlGridFaculty Is Nothing OrElse txtGridMajor Is Nothing OrElse
-               txtGridYearLevel Is Nothing OrElse txtGridDescription Is Nothing OrElse chkIsActive Is Nothing Then
+            If txtGridCandidateADUsername Is Nothing OrElse txtGridFullName Is Nothing OrElse ddlGridFaculty Is Nothing OrElse
+               txtGridMajor Is Nothing OrElse txtGridYearLevel Is Nothing OrElse txtGridDescription Is Nothing OrElse chkIsActive Is Nothing Then
 
                 ShowMessage("One or more candidate controls were not found.", "error")
                 Return
 
             End If
 
+            Dim candidateADUsername As String = txtGridCandidateADUsername.Text.Trim()
             Dim fullName As String = txtGridFullName.Text.Trim()
             Dim major As String = txtGridMajor.Text.Trim()
             Dim description As String = txtGridDescription.Text.Trim()
             Dim newFacultyID As Integer = Convert.ToInt32(ddlGridFaculty.SelectedValue)
             Dim isActive As Boolean = chkIsActive.Checked
 
+            If candidateADUsername = "" Then
+                ShowMessage("Candidate username / student ID cannot be empty.", "warning")
+                Return
+            End If
+
             If fullName = "" Then
                 ShowMessage("Candidate name cannot be empty.", "warning")
+                Return
+            End If
+
+            If Not EligibleVoterIsActive(candidateADUsername) Then
+                ShowMessage("This username/student ID does not exist as an active eligible voter.", "warning")
                 Return
             End If
 
@@ -575,11 +684,17 @@ Public Class ManageCandidates
             End If
 
             Try
+                If CandidateUsernameAlreadyExists(candidateADUsername, positionID, candidateID) Then
+                    ShowMessage("Another candidate with the same username/student ID already exists for this position.", "warning")
+                    Return
+                End If
+
                 Using con As New SqlConnection(connectionString)
 
                     Dim query As String = "
                         UPDATE Candidates
                         SET 
+                            CandidateADUsername = @CandidateADUsername,
                             FullName = @FullName,
                             FacultyID = @FacultyID,
                             Major = @Major,
@@ -591,6 +706,7 @@ Public Class ManageCandidates
 
                     Using cmd As New SqlCommand(query, con)
 
+                        cmd.Parameters.AddWithValue("@CandidateADUsername", candidateADUsername)
                         cmd.Parameters.AddWithValue("@FullName", fullName)
                         cmd.Parameters.AddWithValue("@FacultyID", newFacultyID)
                         cmd.Parameters.AddWithValue("@Major", major)
@@ -609,6 +725,7 @@ Public Class ManageCandidates
                 AddAuditLog(
                     "Update Candidate",
                     "Updated CandidateID: " & candidateID.ToString() &
+                    ", Username: " & candidateADUsername &
                     ", Name: " & fullName &
                     ", Old FacultyID: " & oldFacultyID &
                     ", New FacultyID: " & newFacultyID.ToString() &
@@ -708,7 +825,7 @@ Public Class ManageCandidates
         sb.Append("<h2>Candidates List</h2>")
         sb.Append("<p><b>Export Date:</b> " & DateTime.Now.ToString("dd-MM-yyyy HH:mm") & "</p>")
 
-        sb.Append("<p><b>Candidate Name Filter:</b> " & HttpUtility.HtmlEncode(txtCandidateNameFilter.Text.Trim()) & "</p>")
+        sb.Append("<p><b>Candidate Name / Username Filter:</b> " & HttpUtility.HtmlEncode(txtCandidateNameFilter.Text.Trim()) & "</p>")
         sb.Append("<p><b>Election Filter:</b> " & HttpUtility.HtmlEncode(ddlElectionFilter.SelectedItem.Text) & "</p>")
         sb.Append("<p><b>Position Filter:</b> " & HttpUtility.HtmlEncode(ddlPositionFilter.SelectedItem.Text) & "</p>")
         sb.Append("<p><b>Faculty Filter:</b> " & HttpUtility.HtmlEncode(ddlFacultyFilter.SelectedItem.Text) & "</p>")
@@ -718,6 +835,7 @@ Public Class ManageCandidates
 
         sb.Append("<tr>")
         sb.Append("<th>Candidate ID</th>")
+        sb.Append("<th>Username / Student ID</th>")
         sb.Append("<th>Candidate Name</th>")
         sb.Append("<th>Election</th>")
         sb.Append("<th>Position</th>")
@@ -733,6 +851,7 @@ Public Class ManageCandidates
 
             sb.Append("<tr>")
             sb.Append("<td>" & HttpUtility.HtmlEncode(row("CandidateID").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("CandidateADUsername").ToString()) & "</td>")
             sb.Append("<td>" & HttpUtility.HtmlEncode(row("FullName").ToString()) & "</td>")
             sb.Append("<td>" & HttpUtility.HtmlEncode(row("ElectionTitle").ToString()) & "</td>")
             sb.Append("<td>" & HttpUtility.HtmlEncode(row("PositionTitle").ToString()) & "</td>")

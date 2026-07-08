@@ -23,13 +23,13 @@ Partial Public Class Results
 	Protected WithEvents form1 As Global.System.Web.UI.HtmlControls.HtmlForm
 
 	'''<summary>
-	'''lblFullName control.
+	'''lblAdminName control.
 	'''</summary>
 	'''<remarks>
 	'''Auto-generated field.
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
-	Protected WithEvents lblFullName As Global.System.Web.UI.WebControls.Label
+	Protected WithEvents lblAdminName As Global.System.Web.UI.WebControls.Label
 
 	'''<summary>
 	'''lblUsername control.
@@ -66,6 +66,24 @@ Partial Public Class Results
 	'''To modify move field declaration from designer file to code-behind file.
 	'''</remarks>
 	Protected WithEvents ddlElections As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''ddlFacultyFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlFacultyFilter As Global.System.Web.UI.WebControls.DropDownList
+
+	'''<summary>
+	'''ddlPositionFilter control.
+	'''</summary>
+	'''<remarks>
+	'''Auto-generated field.
+	'''To modify move field declaration from designer file to code-behind file.
+	'''</remarks>
+	Protected WithEvents ddlPositionFilter As Global.System.Web.UI.WebControls.DropDownList
 
 	'''<summary>
 	'''btnRefresh control.

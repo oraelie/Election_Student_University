@@ -5,8 +5,8 @@
 	padding: 0;
 }
 
-.results-container {
-	width: 1150px;
+.page-container {
+	width: 1250px;
 	margin: 50px auto;
 	padding: 30px;
 	background-color: white;
@@ -15,12 +15,18 @@
 	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
-	.results-container h2 {
+	.page-container h2 {
 		text-align: center;
 		color: #1f2937;
 		margin-top: 0;
 		margin-bottom: 25px;
 		font-size: 28px;
+	}
+
+	.page-container h3 {
+		color: #1f2937;
+		margin-top: 0;
+		margin-bottom: 18px;
 	}
 
 .user-box {
@@ -42,7 +48,6 @@
 	color: #6b7280;
 }
 
-/* Alert message */
 .alert-box {
 	padding: 15px 18px;
 	border-radius: 8px;
@@ -73,47 +78,59 @@
 	border-left-color: #dc2626;
 }
 
-/* Election filter */
 .filter-box {
 	background-color: #f9fafb;
 	border: 1px solid #e5e7eb;
-	padding: 18px;
+	padding: 20px;
 	border-radius: 8px;
-	margin-bottom: 20px;
+	margin-bottom: 25px;
 }
 
-	.filter-box label {
+.filter-row {
+	display: flex;
+	gap: 18px;
+	margin-bottom: 15px;
+}
+
+.filter-item {
+	flex: 1;
+}
+
+	.filter-item label {
 		display: block;
+		margin-top: 12px;
+		margin-bottom: 6px;
 		font-weight: bold;
-		margin-bottom: 8px;
 		color: #1f2937;
 	}
 
-.dropdown {
+.input-box {
 	width: 100%;
 	padding: 11px;
+	box-sizing: border-box;
 	border: 1px solid #cbd5e1;
 	border-radius: 6px;
-	background-color: white;
-	color: #111827;
 	font-size: 15px;
-	box-sizing: border-box;
+	background-color: white;
 }
 
-	.dropdown:focus {
+	.input-box:focus {
 		outline: none;
 		border-color: #1f2937;
 		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.15);
 	}
 
-/* Results table */
-.results-table {
-	width: 100%;
-	border-collapse: collapse;
-	margin-top: 20px;
+.filter-buttons {
+	margin-top: 12px;
 }
 
-	.results-table th {
+.data-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 15px;
+}
+
+	.data-table th {
 		background-color: #1f2937;
 		color: white;
 		padding: 11px;
@@ -121,26 +138,19 @@
 		white-space: nowrap;
 	}
 
-	.results-table td {
-		padding: 11px;
+	.data-table td {
+		padding: 10px;
 		border-bottom: 1px solid #e5e7eb;
 		vertical-align: middle;
 	}
 
-	.results-table tr:nth-child(even) {
+	.data-table tr:nth-child(even) {
 		background-color: #f9fafb;
 	}
 
-/* Buttons */
 .button-area {
 	text-align: center;
 	margin-top: 25px;
-}
-
-.top-buttons {
-	text-align: right;
-	margin-top: 0;
-	margin-bottom: 10px;
 }
 
 .main-button {
@@ -152,6 +162,7 @@
 	border-radius: 5px;
 	font-weight: bold;
 	margin-right: 8px;
+	margin-top: 15px;
 }
 
 	.main-button:hover {
@@ -166,7 +177,6 @@
 	cursor: pointer;
 	border-radius: 5px;
 	font-weight: bold;
-	margin-left: 8px;
 }
 
 	.export-button:hover {
@@ -179,7 +189,7 @@
 	color: white;
 	border: none;
 	cursor: pointer;
-	margin-right: 10px;
+	margin-right: 8px;
 	border-radius: 5px;
 	font-weight: bold;
 }
@@ -202,31 +212,31 @@
 		background-color: #dc2626;
 	}
 
-/* Responsive */
 @media screen and (max-width: 950px) {
-	.results-container {
+	.page-container {
 		width: 95%;
 		margin: 25px auto;
 		padding: 22px;
 		overflow-x: auto;
 	}
 
-	.button-area {
+	.filter-row {
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.button-area,
+	.filter-buttons {
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
 	}
 
-	.top-buttons {
-		text-align: center;
-	}
-
-	.back-button,
-	.logout-button,
 	.main-button,
-	.export-button {
+	.export-button,
+	.back-button,
+	.logout-button {
 		width: 100%;
 		margin-right: 0;
-		margin-left: 0;
 	}
 }

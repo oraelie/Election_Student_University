@@ -6,7 +6,7 @@
 }
 
 .page-container {
-	width: 1350px;
+	width: 1450px;
 	margin: 50px auto;
 	padding: 30px;
 	background-color: white;
@@ -48,7 +48,6 @@
 	color: #6b7280;
 }
 
-/* Alert message */
 .alert-box {
 	padding: 15px 18px;
 	border-radius: 8px;
@@ -79,7 +78,6 @@
 	border-left-color: #dc2626;
 }
 
-/* Add and filter boxes */
 .form-box,
 .filter-box {
 	background-color: #f9fafb;
@@ -128,7 +126,6 @@
 	margin-top: 12px;
 }
 
-/* Table */
 .data-table {
 	width: 100%;
 	border-collapse: collapse;
@@ -152,6 +149,15 @@
 	.data-table tr:nth-child(even) {
 		background-color: #f9fafb;
 	}
+
+.grid-username-input {
+	width: 140px;
+	padding: 8px;
+	border: 1px solid #cbd5e1;
+	border-radius: 5px;
+	font-size: 14px;
+	box-sizing: border-box;
+}
 
 .grid-input {
 	width: 150px;
@@ -182,7 +188,7 @@
 }
 
 .grid-dropdown {
-	width: 200px;
+	width: 190px;
 	padding: 8px;
 	border: 1px solid #cbd5e1;
 	border-radius: 5px;
@@ -192,6 +198,7 @@
 	box-sizing: border-box;
 }
 
+	.grid-username-input:focus,
 	.grid-input:focus,
 	.grid-year-input:focus,
 	.grid-description:focus,
@@ -201,7 +208,6 @@
 		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.12);
 	}
 
-/* Buttons */
 .button-area {
 	text-align: center;
 	margin-top: 25px;
@@ -295,7 +301,6 @@
 		background-color: #dc2626;
 	}
 
-/* Responsive */
 @media screen and (max-width: 950px) {
 	.page-container {
 		width: 95%;
