@@ -2,6 +2,8 @@
 Imports System.Data.SqlClient
 Imports System.Configuration
 Imports System.Globalization
+Imports System.Text
+Imports System.Web
 
 Public Class ManageElections
     Inherits System.Web.UI.Page
@@ -42,51 +44,66 @@ Public Class ManageElections
 
     End Sub
 
-    Private Sub LoadElections()
+    Private Function GetElectionsData() As DataTable
 
-        Try
-            Using con As New SqlConnection(connectionString)
+        Dim dt As New DataTable()
 
-                Dim query As String = "
-                    SELECT 
-                        ElectionID,
-                        ElectionTitle,
-                        FORMAT(StartDateTime, 'dd-MM-yyyy HH:mm') AS StartDateTime,
-                        FORMAT(EndDateTime, 'dd-MM-yyyy HH:mm') AS EndDateTime,
-                        Status
-                    FROM Elections
-                    ORDER BY ElectionID DESC
-                "
+        Using con As New SqlConnection(connectionString)
 
-                Using cmd As New SqlCommand(query, con)
+            Dim query As String = "
+                SELECT 
+                    ElectionID,
+                    ElectionTitle,
+                    FORMAT(StartDateTime, 'dd-MM-yyyy HH:mm') AS StartDateTime,
+                    FORMAT(EndDateTime, 'dd-MM-yyyy HH:mm') AS EndDateTime,
+                    Status
+                FROM Elections
+                ORDER BY ElectionID DESC
+            "
 
-                    Dim dt As New DataTable()
+            Using cmd As New SqlCommand(query, con)
 
-                    Using da As New SqlDataAdapter(cmd)
-                        da.Fill(dt)
-                    End Using
-
-                    gvElections.DataSource = dt
-                    gvElections.DataBind()
-
-                    For Each row As GridViewRow In gvElections.Rows
-
-                        Dim ddl As DropDownList =
-                            TryCast(row.FindControl("ddlGridStatus"), DropDownList)
-
-                        If ddl IsNot Nothing Then
-                            Dim status As String = dt.Rows(row.RowIndex)("Status").ToString()
-
-                            If ddl.Items.FindByValue(status) IsNot Nothing Then
-                                ddl.SelectedValue = status
-                            End If
-                        End If
-
-                    Next
-
+                Using da As New SqlDataAdapter(cmd)
+                    da.Fill(dt)
                 End Using
 
             End Using
+
+        End Using
+
+        Return dt
+
+    End Function
+
+    Private Sub LoadElections()
+
+        Try
+            Dim dt As DataTable = GetElectionsData()
+
+            gvElections.DataSource = dt
+            gvElections.DataBind()
+
+            For Each row As GridViewRow In gvElections.Rows
+
+                Dim ddl As DropDownList =
+                    TryCast(row.FindControl("ddlGridStatus"), DropDownList)
+
+                If ddl IsNot Nothing Then
+                    Dim status As String = dt.Rows(row.RowIndex)("Status").ToString()
+
+                    If ddl.Items.FindByValue(status) IsNot Nothing Then
+                        ddl.SelectedValue = status
+                    End If
+                End If
+
+            Next
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No elections found.", "warning")
+            Else
+                pnlMessage.Visible = False
+                lblMessage.Text = ""
+            End If
 
         Catch ex As Exception
             ShowMessage("Error loading elections: " & ex.Message, "error")
@@ -292,6 +309,78 @@ Public Class ManageElections
             End Try
 
         End If
+
+    End Sub
+
+    Protected Sub btnExportExcel_Click(sender As Object, e As EventArgs) Handles btnExportExcel.Click
+
+        Try
+            Dim dt As DataTable = GetElectionsData()
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No elections available to export.", "warning")
+                Return
+            End If
+
+            ExportElectionsToExcel(dt)
+
+        Catch ex As Exception
+            ShowMessage("Error exporting elections: " & ex.Message, "error")
+        End Try
+
+    End Sub
+
+    Private Sub ExportElectionsToExcel(dt As DataTable)
+
+        Dim fileName As String =
+            "Elections_" & DateTime.Now.ToString("dd-MM-yyyy_HHmm") & ".xls"
+
+        Dim sb As New StringBuilder()
+
+        sb.Append("<html>")
+        sb.Append("<head>")
+        sb.Append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />")
+        sb.Append("</head>")
+        sb.Append("<body>")
+
+        sb.Append("<h2>Elections List</h2>")
+        sb.Append("<p><b>Export Date:</b> " & DateTime.Now.ToString("dd-MM-yyyy HH:mm") & "</p>")
+
+        sb.Append("<table border='1'>")
+
+        sb.Append("<tr>")
+        sb.Append("<th>Election ID</th>")
+        sb.Append("<th>Election Title</th>")
+        sb.Append("<th>Start Date / Time</th>")
+        sb.Append("<th>End Date / Time</th>")
+        sb.Append("<th>Status</th>")
+        sb.Append("</tr>")
+
+        For Each row As DataRow In dt.Rows
+
+            sb.Append("<tr>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("ElectionID").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("ElectionTitle").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("StartDateTime").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("EndDateTime").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("Status").ToString()) & "</td>")
+            sb.Append("</tr>")
+
+        Next
+
+        sb.Append("</table>")
+        sb.Append("</body>")
+        sb.Append("</html>")
+
+        Response.Clear()
+        Response.Buffer = True
+        Response.ContentType = "application/vnd.ms-excel"
+        Response.AddHeader("Content-Disposition", "attachment;filename=" & fileName)
+        Response.Charset = "utf-8"
+        Response.ContentEncoding = Encoding.UTF8
+        Response.Write(sb.ToString())
+        Response.Flush()
+        Response.End()
 
     End Sub
 

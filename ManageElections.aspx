@@ -5,7 +5,7 @@
 <html>
 <head runat="server">
     <title>Manage Elections</title>
-    <link href="Css/ManageElections.css" rel="stylesheet" type="text/css" />
+    <link href="Css/ManageElections.css?v=2" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
@@ -66,6 +66,16 @@
                     CssClass="main-button" />
             </div>
 
+            <div class="action-box">
+                <h3>Export Elections</h3>
+
+                <asp:Button 
+                    ID="btnExportExcel" 
+                    runat="server" 
+                    Text="Export to Excel" 
+                    CssClass="export-button" />
+            </div>
+
             <h3>Existing Elections</h3>
 
             <asp:GridView 
@@ -114,16 +124,11 @@
 
                     <asp:TemplateField HeaderText="Status">
                         <ItemTemplate>
-                            <asp:DropDownList 
-                                ID="ddlGridStatus" 
-                                runat="server" 
-                                CssClass="grid-dropdown">
-
+                            <asp:DropDownList ID="ddlGridStatus" runat="server" CssClass="grid-dropdown">
                                 <asp:ListItem Text="Draft" Value="Draft"></asp:ListItem>
                                 <asp:ListItem Text="Open" Value="Open"></asp:ListItem>
                                 <asp:ListItem Text="Closed" Value="Closed"></asp:ListItem>
                                 <asp:ListItem Text="Cancelled" Value="Cancelled"></asp:ListItem>
-
                             </asp:DropDownList>
                         </ItemTemplate>
                     </asp:TemplateField>

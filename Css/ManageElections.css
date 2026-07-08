@@ -25,7 +25,8 @@
 
 	.page-container h3 {
 		color: #1f2937;
-		margin-top: 25px;
+		margin-top: 0;
+		margin-bottom: 18px;
 	}
 
 .user-box {
@@ -78,7 +79,9 @@
 	border-left-color: #dc2626;
 }
 
-.form-box {
+/* Boxes */
+.form-box,
+.action-box {
 	background-color: #f9fafb;
 	border: 1px solid #e5e7eb;
 	padding: 20px;
@@ -110,6 +113,7 @@
 		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.15);
 	}
 
+/* Table */
 .data-table {
 	width: 100%;
 	border-collapse: collapse;
@@ -171,6 +175,7 @@
 		box-shadow: 0 0 0 2px rgba(31, 41, 55, 0.12);
 	}
 
+/* Buttons */
 .main-button {
 	margin-top: 15px;
 	padding: 11px 20px;
@@ -184,6 +189,20 @@
 
 	.main-button:hover {
 		background-color: #374151;
+	}
+
+.export-button {
+	padding: 11px 20px;
+	background-color: #047857;
+	color: white;
+	border: none;
+	cursor: pointer;
+	border-radius: 5px;
+	font-weight: bold;
+}
+
+	.export-button:hover {
+		background-color: #059669;
 	}
 
 .small-button {
@@ -234,6 +253,7 @@
 		background-color: #dc2626;
 	}
 
+/* Responsive */
 @media screen and (max-width: 950px) {
 	.page-container {
 		width: 95%;
@@ -249,7 +269,9 @@
 	}
 
 	.back-button,
-	.logout-button {
+	.logout-button,
+	.main-button,
+	.export-button {
 		width: 100%;
 		margin-right: 0;
 	}

@@ -1,6 +1,8 @@
 ﻿Imports System.Data
 Imports System.Data.SqlClient
 Imports System.Configuration
+Imports System.Text
+Imports System.Web
 
 Public Class ManageFaculties
     Inherits System.Web.UI.Page
@@ -41,68 +43,80 @@ Public Class ManageFaculties
 
     End Sub
 
-    Private Sub LoadFaculties()
+    Private Function GetFacultiesData() As DataTable
 
         Dim facultyNameFilter As String = txtFacultyNameFilter.Text.Trim()
         Dim statusFilter As String = ddlStatusFilter.SelectedValue
 
-        Try
-            Using con As New SqlConnection(connectionString)
+        Dim dt As New DataTable()
 
-                Dim query As String = "
-                    SELECT 
-                        FacultyID,
-                        FacultyName,
-                        IsActive
-                    FROM Faculties
-                    WHERE 1 = 1
+        Using con As New SqlConnection(connectionString)
+
+            Dim query As String = "
+                SELECT 
+                    FacultyID,
+                    FacultyName,
+                    IsActive,
+                    CASE 
+                        WHEN IsActive = 1 THEN 'Active'
+                        ELSE 'Inactive'
+                    END AS StatusText
+                FROM Faculties
+                WHERE 1 = 1
+            "
+
+            If facultyNameFilter <> "" Then
+                query &= "
+                    AND FacultyName LIKE @FacultyName
                 "
+            End If
+
+            If statusFilter <> "" Then
+                query &= "
+                    AND IsActive = @IsActive
+                "
+            End If
+
+            query &= "
+                ORDER BY FacultyName
+            "
+
+            Using cmd As New SqlCommand(query, con)
 
                 If facultyNameFilter <> "" Then
-                    query &= "
-                        AND FacultyName LIKE @FacultyName
-                    "
+                    cmd.Parameters.AddWithValue("@FacultyName", "%" & facultyNameFilter & "%")
                 End If
 
                 If statusFilter <> "" Then
-                    query &= "
-                        AND IsActive = @IsActive
-                    "
+                    cmd.Parameters.AddWithValue("@IsActive", Convert.ToBoolean(Convert.ToInt32(statusFilter)))
                 End If
 
-                query &= "
-                    ORDER BY FacultyName
-                "
-
-                Using cmd As New SqlCommand(query, con)
-
-                    If facultyNameFilter <> "" Then
-                        cmd.Parameters.AddWithValue("@FacultyName", "%" & facultyNameFilter & "%")
-                    End If
-
-                    If statusFilter <> "" Then
-                        cmd.Parameters.AddWithValue("@IsActive", Convert.ToBoolean(Convert.ToInt32(statusFilter)))
-                    End If
-
-                    Dim dt As New DataTable()
-
-                    Using da As New SqlDataAdapter(cmd)
-                        da.Fill(dt)
-                    End Using
-
-                    gvFaculties.DataSource = dt
-                    gvFaculties.DataBind()
-
-                    If dt.Rows.Count = 0 Then
-                        ShowMessage("No faculties found for the selected filter.", "warning")
-                    Else
-                        pnlMessage.Visible = False
-                        lblMessage.Text = ""
-                    End If
-
+                Using da As New SqlDataAdapter(cmd)
+                    da.Fill(dt)
                 End Using
 
             End Using
+
+        End Using
+
+        Return dt
+
+    End Function
+
+    Private Sub LoadFaculties()
+
+        Try
+            Dim dt As DataTable = GetFacultiesData()
+
+            gvFaculties.DataSource = dt
+            gvFaculties.DataBind()
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No faculties found for the selected filter.", "warning")
+            Else
+                pnlMessage.Visible = False
+                lblMessage.Text = ""
+            End If
 
         Catch ex As Exception
             ShowMessage("Error loading faculties: " & ex.Message, "error")
@@ -288,6 +302,77 @@ Public Class ManageFaculties
     Protected Sub btnRefresh_Click(sender As Object, e As EventArgs) Handles btnRefresh.Click
 
         LoadFaculties()
+
+    End Sub
+
+    Protected Sub btnExportExcel_Click(sender As Object, e As EventArgs) Handles btnExportExcel.Click
+
+        Try
+            Dim dt As DataTable = GetFacultiesData()
+
+            If dt.Rows.Count = 0 Then
+                ShowMessage("No faculties available to export for the selected filter.", "warning")
+                Return
+            End If
+
+            ExportFacultiesToExcel(dt)
+
+        Catch ex As Exception
+            ShowMessage("Error exporting faculties: " & ex.Message, "error")
+        End Try
+
+    End Sub
+
+    Private Sub ExportFacultiesToExcel(dt As DataTable)
+
+        Dim fileName As String =
+            "Faculties_" & DateTime.Now.ToString("dd-MM-yyyy_HHmm") & ".xls"
+
+        Dim sb As New StringBuilder()
+
+        sb.Append("<html>")
+        sb.Append("<head>")
+        sb.Append("<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />")
+        sb.Append("</head>")
+        sb.Append("<body>")
+
+        sb.Append("<h2>Faculties List</h2>")
+        sb.Append("<p><b>Export Date:</b> " & DateTime.Now.ToString("dd-MM-yyyy HH:mm") & "</p>")
+
+        sb.Append("<p><b>Faculty Name Filter:</b> " & HttpUtility.HtmlEncode(txtFacultyNameFilter.Text.Trim()) & "</p>")
+        sb.Append("<p><b>Status Filter:</b> " & HttpUtility.HtmlEncode(ddlStatusFilter.SelectedItem.Text) & "</p>")
+
+        sb.Append("<table border='1'>")
+
+        sb.Append("<tr>")
+        sb.Append("<th>Faculty ID</th>")
+        sb.Append("<th>Faculty Name</th>")
+        sb.Append("<th>Status</th>")
+        sb.Append("</tr>")
+
+        For Each row As DataRow In dt.Rows
+
+            sb.Append("<tr>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("FacultyID").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("FacultyName").ToString()) & "</td>")
+            sb.Append("<td>" & HttpUtility.HtmlEncode(row("StatusText").ToString()) & "</td>")
+            sb.Append("</tr>")
+
+        Next
+
+        sb.Append("</table>")
+        sb.Append("</body>")
+        sb.Append("</html>")
+
+        Response.Clear()
+        Response.Buffer = True
+        Response.ContentType = "application/vnd.ms-excel"
+        Response.AddHeader("Content-Disposition", "attachment;filename=" & fileName)
+        Response.Charset = "utf-8"
+        Response.ContentEncoding = Encoding.UTF8
+        Response.Write(sb.ToString())
+        Response.Flush()
+        Response.End()
 
     End Sub
 

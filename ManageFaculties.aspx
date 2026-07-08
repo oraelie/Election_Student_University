@@ -5,7 +5,7 @@
 <html>
 <head runat="server">
     <title>Manage Faculties</title>
-    <link href="Css/ManageFaculties.css" rel="stylesheet" type="text/css" />
+    <link href="Css/ManageFaculties.css?v=2" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
@@ -87,6 +87,12 @@
                         runat="server" 
                         Text="Clear Filter" 
                         CssClass="clear-button" />
+
+                    <asp:Button 
+                        ID="btnExportExcel" 
+                        runat="server" 
+                        Text="Export to Excel" 
+                        CssClass="export-button" />
                 </div>
 
             </div>
