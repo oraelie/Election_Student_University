@@ -317,6 +317,93 @@ Public Class ManagePositions
 
     End Sub
 
+    Private Function PositionAlreadyExists(
+        electionID As Integer,
+        positionTitle As String,
+        facultyIDValue As Object,
+        excludePositionID As Integer
+    ) As Boolean
+
+        Using con As New SqlConnection(connectionString)
+
+            Dim query As String = "
+                SELECT COUNT(*)
+                FROM Positions
+                WHERE ElectionID = @ElectionID
+                AND LOWER(LTRIM(RTRIM(PositionTitle))) = LOWER(LTRIM(RTRIM(@PositionTitle)))
+            "
+
+            If facultyIDValue Is DBNull.Value Then
+                query &= "
+                    AND FacultyID IS NULL
+                "
+            Else
+                query &= "
+                    AND FacultyID = @FacultyID
+                "
+            End If
+
+            If excludePositionID > 0 Then
+                query &= "
+                    AND PositionID <> @ExcludePositionID
+                "
+            End If
+
+            Using cmd As New SqlCommand(query, con)
+
+                cmd.Parameters.AddWithValue("@ElectionID", electionID)
+                cmd.Parameters.AddWithValue("@PositionTitle", positionTitle)
+
+                If Not facultyIDValue Is DBNull.Value Then
+                    cmd.Parameters.AddWithValue("@FacultyID", Convert.ToInt32(facultyIDValue))
+                End If
+
+                If excludePositionID > 0 Then
+                    cmd.Parameters.AddWithValue("@ExcludePositionID", excludePositionID)
+                End If
+
+                con.Open()
+
+                Dim count As Integer = Convert.ToInt32(cmd.ExecuteScalar())
+
+                Return count > 0
+
+            End Using
+
+        End Using
+
+    End Function
+
+    Private Function GetElectionIDForPosition(positionID As Integer) As Integer
+
+        Using con As New SqlConnection(connectionString)
+
+            Dim query As String = "
+                SELECT ElectionID
+                FROM Positions
+                WHERE PositionID = @PositionID
+            "
+
+            Using cmd As New SqlCommand(query, con)
+
+                cmd.Parameters.AddWithValue("@PositionID", positionID)
+
+                con.Open()
+
+                Dim result As Object = cmd.ExecuteScalar()
+
+                If result Is Nothing Then
+                    Return 0
+                End If
+
+                Return Convert.ToInt32(result)
+
+            End Using
+
+        End Using
+
+    End Function
+
     Protected Sub btnAddPosition_Click(sender As Object, e As EventArgs) Handles btnAddPosition.Click
 
         Dim positionTitle As String = txtPositionTitle.Text.Trim()
@@ -342,6 +429,11 @@ Public Class ManagePositions
         End If
 
         Try
+            If PositionAlreadyExists(electionID, positionTitle, facultyIDValue, 0) Then
+                ShowMessage("This position already exists for the selected election and faculty.", "warning")
+                Return
+            End If
+
             Using con As New SqlConnection(connectionString)
 
                 Dim query As String = "
@@ -426,6 +518,13 @@ Public Class ManagePositions
                 Return
             End If
 
+            Dim electionID As Integer = GetElectionIDForPosition(positionID)
+
+            If electionID = 0 Then
+                ShowMessage("Could not find the election linked to this position.", "error")
+                Return
+            End If
+
             Dim newFacultyIDValue As Object
             Dim newFacultyAuditText As String
 
@@ -438,6 +537,11 @@ Public Class ManagePositions
             End If
 
             Try
+                If PositionAlreadyExists(electionID, positionTitle, newFacultyIDValue, positionID) Then
+                    ShowMessage("Another position with the same title already exists for this election and faculty.", "warning")
+                    Return
+                End If
+
                 Using con As New SqlConnection(connectionString)
 
                     Dim query As String = "
