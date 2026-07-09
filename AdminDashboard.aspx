@@ -31,9 +31,15 @@
                         runat="server" 
                         Text="Open" 
                         CssClass="card-button" />
-                </div>
+                    </div>
 
+                <asp:Button 
+                        ID="btnPreElectionCheck" 
+                        runat="server" 
+                        Text="Pre-Election Check" 
+                        CssClass="dashboard-button" />
                 <div class="dashboard-card">
+
                     <h3>Manage Positions</h3>
                     <p>Add positions such as President, Vice President, or Faculty Representative.</p>
                     <asp:Button 

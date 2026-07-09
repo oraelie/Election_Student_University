@@ -60,5 +60,10 @@
     Protected Sub btnManageFaculties_Click(sender As Object, e As EventArgs) Handles btnManageFaculties.Click
         Response.Redirect("ManageFaculties.aspx")
     End Sub
+    Protected Sub btnPreElectionCheck_Click(sender As Object, e As EventArgs) Handles btnPreElectionCheck.Click
+
+        Response.Redirect("PreElectionCheck.aspx")
+
+    End Sub
 
 End Class
