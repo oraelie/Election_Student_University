@@ -111,6 +111,115 @@ Public Class ManageElections
 
     End Sub
 
+    Private Function ElectionHasValidationErrors(electionID As Integer, ByRef validationMessage As String) As Boolean
+
+        validationMessage = ""
+
+        Try
+            Using con As New SqlConnection(connectionString)
+
+                Using cmd As New SqlCommand("sp_PreElectionValidation", con)
+
+                    cmd.CommandType = CommandType.StoredProcedure
+                    cmd.Parameters.AddWithValue("@ElectionID", electionID)
+
+                    Dim dt As New DataTable()
+
+                    Using da As New SqlDataAdapter(cmd)
+                        da.Fill(dt)
+                    End Using
+
+                    Dim errors As New List(Of String)()
+
+                    For Each row As DataRow In dt.Rows
+
+                        Dim status As String = row("Status").ToString().Trim().ToUpper()
+
+                        If status = "ERROR" Then
+                            errors.Add(row("CheckName").ToString() & ": " & row("Message").ToString())
+                        End If
+
+                    Next
+
+                    If errors.Count > 0 Then
+
+                        validationMessage =
+                            "Election cannot be opened because the pre-election check found errors:<br/>" &
+                            String.Join("<br/>", errors)
+
+                        Return True
+
+                    End If
+
+                End Using
+
+            End Using
+
+        Catch ex As Exception
+
+            validationMessage =
+                "Could not run pre-election validation: " & ex.Message
+
+            Return True
+
+        End Try
+
+        Return False
+
+    End Function
+
+    Private Function ElectionHasValidationWarnings(electionID As Integer, ByRef warningMessage As String) As Boolean
+
+        warningMessage = ""
+
+        Try
+            Using con As New SqlConnection(connectionString)
+
+                Using cmd As New SqlCommand("sp_PreElectionValidation", con)
+
+                    cmd.CommandType = CommandType.StoredProcedure
+                    cmd.Parameters.AddWithValue("@ElectionID", electionID)
+
+                    Dim dt As New DataTable()
+
+                    Using da As New SqlDataAdapter(cmd)
+                        da.Fill(dt)
+                    End Using
+
+                    Dim warnings As New List(Of String)()
+
+                    For Each row As DataRow In dt.Rows
+
+                        Dim status As String = row("Status").ToString().Trim().ToUpper()
+
+                        If status = "WARNING" Then
+                            warnings.Add(row("CheckName").ToString() & ": " & row("Message").ToString())
+                        End If
+
+                    Next
+
+                    If warnings.Count > 0 Then
+
+                        warningMessage =
+                            "Election opened, but the pre-election check found warnings:<br/>" &
+                            String.Join("<br/>", warnings)
+
+                        Return True
+
+                    End If
+
+                End Using
+
+            End Using
+
+        Catch
+            ' If warning check fails, do not block after error check has passed.
+        End Try
+
+        Return False
+
+    End Function
+
     Protected Sub btnAddElection_Click(sender As Object, e As EventArgs) Handles btnAddElection.Click
 
         Dim electionTitle As String = txtElectionTitle.Text.Trim()
@@ -263,6 +372,17 @@ Public Class ManageElections
 
             Dim newStatus As String = ddlStatusGrid.SelectedValue
 
+            If newStatus = "Open" Then
+
+                Dim validationMessage As String = ""
+
+                If ElectionHasValidationErrors(electionID, validationMessage) Then
+                    ShowMessage(validationMessage, "error")
+                    Return
+                End If
+
+            End If
+
             Try
                 Using con As New SqlConnection(connectionString)
 
@@ -302,7 +422,19 @@ Public Class ManageElections
 
                 LoadElections()
 
-                ShowMessage("Election updated successfully.", "success")
+                If newStatus = "Open" Then
+
+                    Dim warningMessage As String = ""
+
+                    If ElectionHasValidationWarnings(electionID, warningMessage) Then
+                        ShowMessage(warningMessage, "warning")
+                    Else
+                        ShowMessage("Election updated successfully and opened. Pre-election validation passed.", "success")
+                    End If
+
+                Else
+                    ShowMessage("Election updated successfully.", "success")
+                End If
 
             Catch ex As Exception
                 ShowMessage("Error updating election: " & ex.Message, "error")
